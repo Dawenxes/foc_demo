@@ -2,9 +2,8 @@
 #define	__BSP_BLDCM_CONTROL_H
 
 #include "stm32f4xx.h"
-#include "./tim/bsp_motor_tim.h"
 #include "main.h"
-
+#include "tim.h"
 //引脚定义
 /*******************************************************/
 // 连接驱动板的 SD 脚
