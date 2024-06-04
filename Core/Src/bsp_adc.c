@@ -30,6 +30,31 @@ static uint32_t adc_mean_sum_w = 0;        // 平均值累加
 static uint32_t adc_mean_count_u = 0;      // 累加计数
 static uint32_t adc_mean_count_v = 0;      // 累加计数
 static uint32_t adc_mean_count_w = 0;      // 累加计数
+
+
+int32_t ia_test,ib_test,ic_test;
+//float err;
+
+
+double Ia,Ib,Ic;
+float Ia_test,Ib_test,Ic_test;
+float Vbus;
+uint16_t ADC1ConvertedValue[5];
+uint16_t i = 0;
+uint32_t A_offset,B_offset;
+uint8_t get_offset_flag = 0;
+uint8_t get_offset_sample_cnt = 0;
+u8 oled_display_sample_freq = 0;
+u8 speed_close_loop_flag;
+float Iq_ref;
+float EKF_Hz;
+
+float theta_add;
+float theta;
+
+extern float Rs;
+extern float Ls;
+extern float flux;
 /**
   * @brief  ADC 通道引脚初始化
   * @param  无
@@ -196,6 +221,10 @@ void ADC_Init(void) {
     ADC_Mode_Config();
 }
 
+void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef *hadc) {
+
+}
+
 /**
   * @brief  常规转换在非阻塞模式下完成回调
   * @param  hadc: ADC  句柄.
@@ -210,7 +239,7 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
     for (uint32_t count = 0; count < ADC_NUM_MAX; count += 5) {
         adc_mean += (int32_t) adc_buff[count];
     }
-    adc_mean_t = adc_mean / (ADC_NUM_MAX / 5);    // 保存平均值
+    adc_mean_t = adc_mean / (ADC_NUM_MAX_COUNT);    // 保存平均值
     adc_mean = 0;
 
 
@@ -219,7 +248,7 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
         adc_mean += (int32_t) adc_buff[count];
     }
 
-    vbus_adc_mean = adc_mean / (ADC_NUM_MAX / 5);    // 保存平均值
+    vbus_adc_mean = adc_mean / (ADC_NUM_MAX_COUNT);    // 保存平均值
     adc_mean = 0;
 #if 1
     /* 计算电流通道采样的平均值 */
@@ -227,7 +256,7 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
         adc_mean += (uint32_t) adc_buff[count];
     }
 
-    adc_mean_sum_u += adc_mean / (ADC_NUM_MAX / 5);    // 累加电压
+    adc_mean_sum_u += adc_mean / (ADC_NUM_MAX_COUNT);    // 累加电压
     adc_mean_count_u++;
     adc_mean = 0;
     /* 计算电流通道采样的平均值 */
@@ -235,7 +264,7 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
         adc_mean += (uint32_t) adc_buff[count];
     }
 
-    adc_mean_sum_v += adc_mean / (ADC_NUM_MAX / 5);    // 累加电压
+    adc_mean_sum_v += adc_mean / (ADC_NUM_MAX_COUNT);    // 累加电压
     adc_mean_count_v++;
     adc_mean = 0;
     /* 计算电流通道采样的平均值 */
@@ -243,7 +272,7 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
         adc_mean += (uint32_t) adc_buff[count];
     }
 
-    adc_mean_sum_w += adc_mean / (ADC_NUM_MAX / 5);    // 累加电压
+    adc_mean_sum_w += adc_mean / (ADC_NUM_MAX_COUNT);    // 累加电压
     adc_mean_count_w++;
     adc_mean = 0;
 #else
@@ -251,7 +280,28 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
         /* 计算电流通道采样的平均值 */
 
 #endif
+    if(get_offset_flag==2)
+    {
+        hall_angle += hall_angle_add;
+        if(hall_angle<0.0f)
+        {
+            hall_angle += 2.0f*PI;
+        }
+        else if(hall_angle>(2.0f*PI))
+        {
+            hall_angle -= 2.0f*PI;
+        }
+        motor_run();
 
+    }
+    else
+    {
+        if(get_offset_flag==1) {
+            get_curr_val_u();
+            get_curr_val_v();
+            get_curr_val_w();
+        }
+    }
     HAL_ADC_Start_DMA(&ADC_Handle, (uint32_t *) &adc_buff, ADC_NUM_MAX);    // 开始 ADC 采样
 }
 
@@ -320,6 +370,9 @@ int32_t get_curr_val_v(void) {
     if (flag < 17) {
         adc_offset = curr_adc_mean;    // 多次记录偏置电压，待系统稳定偏置电压才为有效值
         flag += 1;
+        if (flag >= 17) {
+            get_offset_flag = 2;
+        }
     }
     if (curr_adc_mean >= adc_offset) {
         curr_adc_mean -= adc_offset;                     // 减去偏置电压
@@ -351,6 +404,9 @@ int32_t get_curr_val_u(void) {
     if (flag < 17) {
         adc_offset = curr_adc_mean;    // 多次记录偏置电压，待系统稳定偏置电压才为有效值
         flag += 1;
+        if (flag >= 17) {
+            get_offset_flag = 2;
+        }
     }
     if (curr_adc_mean >= adc_offset) {
         curr_adc_mean -= adc_offset;                     // 减去偏置电压
@@ -382,6 +438,9 @@ int32_t get_curr_val_w(void) {
     if (flag < 17) {
         adc_offset = curr_adc_mean;    // 多次记录偏置电压，待系统稳定偏置电压才为有效值
         flag += 1;
+        if (flag >= 17) {
+            get_offset_flag = 2;
+        }
     }
     if (curr_adc_mean >= adc_offset) {
         curr_adc_mean -= adc_offset;                     // 减去偏置电压
@@ -404,4 +463,109 @@ float get_vbus_val(void) {
     return GET_VBUS_VAL(vdc);
 }
 
+
+void motor_run(void)
+{
+    float vbus_temp;
+    Vbus = get_vbus_val();
+    Ia = get_curr_val_u();
+    Ib = get_curr_val_v();
+    Ic = get_curr_val_w();
+    Ia_test = Ia;
+    Ib_test = Ib;
+    Ic_test = Ic;
+
+
+    if(speed_close_loop_flag==0)
+    {
+        if((Iq_ref<MOTOR_STARTUP_CURRENT))
+        {
+            Iq_ref += 0.00003f;
+        }
+        else
+        {
+            speed_close_loop_flag=1;
+        }
+    }
+    else
+    {
+        if(speed_close_loop_flag==1)
+        {
+            if(Iq_ref>(MOTOR_STARTUP_CURRENT/2.0f))
+            {
+                Iq_ref -= 0.001f;
+            }
+            else
+            {
+                speed_close_loop_flag=2;
+            }
+        }
+    }
+
+#ifdef  HALL_FOC_SELECT
+
+    if((hall_speed*2.0f*PI)>SPEED_LOOP_CLOSE_RAD_S)
+  {
+    FOC_Input.Id_ref = 0.0f;
+    Speed_Fdk = hall_speed*2.0f*PI;
+    FOC_Input.Iq_ref = Speed_Pid_Out;
+  }
+  else
+  {
+    FOC_Input.Id_ref = 0.0f;
+    FOC_Input.Iq_ref = Iq_ref;
+    Speed_Pid.I_Sum = Iq_ref;
+  }
+  FOC_Input.theta = hall_angle;
+  FOC_Input.speed_fdk = hall_speed*2.0f*PI;
+
+#endif
+
+#ifdef  SENSORLESS_FOC_SELECT
+
+    if(FOC_Output.EKF[2]>SPEED_LOOP_CLOSE_RAD_S)
+  {
+    FOC_Input.Id_ref = 0.0f;
+    Speed_Fdk = FOC_Output.EKF[2];
+    FOC_Input.Iq_ref = Speed_Pid_Out;
+  }
+  else
+  {
+    FOC_Input.Id_ref = 0.0f;
+    FOC_Input.Iq_ref = Iq_ref;
+    Speed_Pid.I_Sum = Iq_ref;
+  }
+  FOC_Input.theta = FOC_Output.EKF[3];
+  FOC_Input.speed_fdk = FOC_Output.EKF[2];
+
+#endif
+
+
+
+    EKF_Hz = FOC_Output.EKF[2]/(2.0f*PI);
+    FOC_Input.Id_ref = 0.0f;
+    FOC_Input.Tpwm = PWM_TIM_PULSE_TPWM;         //FOC
+    FOC_Input.Udc = Vbus;
+    FOC_Input.Rs = Rs;
+    FOC_Input.Ls = Ls;
+    FOC_Input.flux = flux;
+
+    FOC_Input.ia = Ia;
+    FOC_Input.ib = Ib;
+    FOC_Input.ic = Ic;
+    foc_algorithm_step();
+
+    if(motor_start_stop==1)
+    {
+        __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_1, (u16)(FOC_Output.Tcmp1));
+        __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_2, (u16)(FOC_Output.Tcmp2));
+        __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (u16)(FOC_Output.Tcmp3));
+    }
+    else
+    {
+        __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_1, PWM_TIM_PULSE>>1);
+        __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_2, PWM_TIM_PULSE>>1);
+        __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, PWM_TIM_PULSE>>1);
+    }
+}
 /*********************************** END OF FILE *********************************************/

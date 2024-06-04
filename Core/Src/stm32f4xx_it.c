@@ -181,16 +181,7 @@ void PendSV_Handler(void)
 /**
   * @brief This function handles System tick timer.
   */
-void SysTick_Handler(void)
-{
-  /* USER CODE BEGIN SysTick_IRQn 0 */
 
-  /* USER CODE END SysTick_IRQn 0 */
-  HAL_IncTick();
-  /* USER CODE BEGIN SysTick_IRQn 1 */
-
-  /* USER CODE END SysTick_IRQn 1 */
-}
 
 /******************************************************************************/
 /* STM32F4xx Peripheral Interrupt Handlers                                    */
@@ -198,6 +189,7 @@ void SysTick_Handler(void)
 /* For the available peripheral interrupt handler names,                      */
 /* please refer to the startup file (startup_stm32f4xx.s).                    */
 /******************************************************************************/
+
 
 /**
   * @brief This function handles USART1 global interrupt.
@@ -228,5 +220,53 @@ void TIM5_IRQHandler(void)
 }
 
 /* USER CODE BEGIN 1 */
+void ADC_DMA_IRQ_Handler(void)
+{
+    HAL_DMA_IRQHandler(&DMA_Init_Handle);
+}
+void ADC_VBUS_IRQHandler(void)
+{
+    HAL_ADC_IRQHandler(&ADC_Handle);
+}
 
+/**
+ * @brief       KEY0 外部中断服务程序
+ * @param       无
+ * @retval      无
+ */
+void KEY1_INT_IRQHandler(void)
+{
+    HAL_GPIO_EXTI_IRQHandler(KEY1_Pin);         /* 调用中断处理公用函数 清除KEY0所在中断线 的中断标志位 */
+}
+
+/**
+ * @brief       KEY1 外部中断服务程序
+ * @param       无
+ * @retval      无
+ */
+void KEY2_INT_IRQHandler(void)
+{
+    HAL_GPIO_EXTI_IRQHandler(KEY2_Pin);         /* 调用中断处理公用函数 清除KEY1所在中断线 的中断标志位，中断下半部在HAL_GPIO_EXTI_Callback执行 */
+}
+
+void KEY3_INT_IRQHandler(void)
+{
+    HAL_GPIO_EXTI_IRQHandler(KEY3_Pin);         /* 调用中断处理公用函数 清除KEY1所在中断线 的中断标志位，中断下半部在HAL_GPIO_EXTI_Callback执行 */
+}
+void SysTick_Handler(void)
+{
+    /* USER CODE BEGIN SysTick_IRQn 0 */
+
+    /* USER CODE END SysTick_IRQn 0 */
+    HAL_IncTick();
+    /* USER CODE BEGIN SysTick_IRQn 1 */
+    Speed_Pid_Calc(Speed_Ref,Speed_Fdk,&Speed_Pid_Out,&Speed_Pid);
+    hz_100_cnt++;
+    if(hz_100_cnt==10)
+    {
+        low_control_task();
+        hz_100_cnt=0;
+    }
+    /* USER CODE END SysTick_IRQn 1 */
+}
 /* USER CODE END 1 */

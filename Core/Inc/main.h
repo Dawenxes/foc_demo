@@ -40,6 +40,9 @@ extern "C" {
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
+#include "foc_algorithm.h"
+#include "low_task.h"
+
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -122,6 +125,9 @@ void Error_Handler(void);
 #define digitalLo(p, i)            {p->BSRR=(uint32_t)i << 16;}
 #define digitalToggle(p, i)        {p->ODR ^=i;}
 
+#define LED0_TOGGLE        digitalToggle(LED0_GPIO_Port,LED0_Pin)
+#define LED0_OFF        digitalHi(LED0_GPIO_Port,LED0_Pin)
+#define LED0_ON            digitalLo(LED0_GPIO_Port,LED0_Pin)
 
 #define LED1_TOGGLE        digitalToggle(LED1_GPIO_Port,LED1_Pin)
 #define LED1_OFF        digitalHi(LED1_GPIO_Port,LED1_Pin)
@@ -135,9 +141,6 @@ void Error_Handler(void);
 #define LED3_OFF        digitalHi(LED3_GPIO_Port,LED3_Pin)
 #define LED3_ON            digitalLo(LED3_GPIO_Port,LED3_Pin)
 
-#define LED4_TOGGLE        digitalToggle(LED4_GPIO_Port,LED4_Pin)
-#define LED4_OFF        digitalHi(LED4_GPIO_Port,LED4_Pin)
-#define LED4_ON            digitalLo(LED4_GPIO_Port,LED4_Pin)
 
 #define LED_1  \
                     LED1_ON;\
@@ -186,6 +189,37 @@ typedef uint8_t u8;
 #define HALL_SPEED_FACTOR (float)((float)HALL_TIM_CLOCK/6.0f)
 
 #define FOC_PERIOD          0.0001F
+#define MOTOR_STARTUP_CURRENT   1.0f
+#define SPEED_LOOP_CLOSE_RAD_S  50.0f  // 闭环速度控制速度值 rad/s
+
+
+#define HALL_FOC_SELECT
+//#define SENSORLESS_FOC_SELECT
+
+
+#define RS_PARAMETER     0.59f            //电阻参数
+#define LS_PARAMETER     0.001f           //电感参数
+
+#define FLUX_PARAMETER   0.01150f         //磁链参数
+
+
+#define PWM_TIM_CLOCK       168000000
+
+#define PWM_TIM_FREQ        10000         //HZ
+#define PWM_TIM_PULSE       (PWM_TIM_CLOCK/(2*PWM_TIM_FREQ))
+#define PWM_TIM_PULSE_TPWM  (PWM_TIM_CLOCK/(PWM_TIM_FREQ))
+
+
+#define KEY1_INT_IRQn                   EXTI0_IRQn
+#define KEY1_INT_IRQHandler             EXTI0_IRQHandler
+#define KEY2_INT_IRQn                   EXTI2_IRQn
+#define KEY2_INT_IRQHandler             EXTI2_IRQHandler
+#define KEY3_INT_IRQn                   EXTI15_10_IRQn
+#define KEY3_INT_IRQHandler             EXTI15_10_IRQHandler
+
+#define KEY1 HAL_GPIO_ReadPin(KEY1_GPIO_Port, KEY1_Pin) /* 读取 KEY0 引脚 */
+#define KEY2 HAL_GPIO_ReadPin(KEY2_GPIO_Port, KEY2_Pin) /* 读取 KEY1 引脚 */
+#define KEY3 HAL_GPIO_ReadPin(KEY3_GPIO_Port, KEY3_Pin) /* 读取 WKUP 引脚 */
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

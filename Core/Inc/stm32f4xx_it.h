@@ -58,7 +58,11 @@ void SysTick_Handler(void);
 void USART1_IRQHandler(void);
 void TIM5_IRQHandler(void);
 /* USER CODE BEGIN EFP */
-
+void ADC_DMA_IRQ_Handler(void);
+void ADC_VBUS_IRQHandler(void);
+void KEY1_INT_IRQHandler(void);
+void KEY2_INT_IRQHandler(void);
+void KEY3_INT_IRQHandler(void);
 /* USER CODE END EFP */
 
 #ifdef __cplusplus

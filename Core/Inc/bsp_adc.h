@@ -12,9 +12,10 @@
 
 #define VREF                            3.3f     // 参考电压，理论上是3.3
 #define ADC_NUM_MAX                     320    // ADC 转换结果缓冲区最大值
+#define ADC_NUM_MAX_COUNT                     320/5    // ADC 转换结果缓冲区最大值
 
 #define GET_ADC_VDC_VAL(val)            ((float)val/4096.0f*VREF)          // 得到电压值
-  
+
 /*********************** 温度传感器电压采集 ******************/
 // ADC GPIO 宏定义
 #define TEMP_ADC_GPIO_PORT              GPIOF
@@ -62,14 +63,22 @@
 
 extern DMA_HandleTypeDef DMA_Init_Handle;
 extern ADC_HandleTypeDef ADC_Handle;
+extern uint8_t get_offset_flag;
+extern float theta;
+extern float angle;
+extern float Iq_ref;
+extern float EKF_Hz;
+extern uint8_t speed_close_loop_flag;
 
 int32_t get_curr_val_v(void);//获取V相的电流值
 int32_t get_curr_val_u(void);//获取U相的电流值
 int32_t get_curr_val_w(void);//获取W相的电流值
 void ADC_Init(void);				//ADC的初始化
-float get_ntc_v_val(void);	//获取温度传感器端的电压值	
+float get_ntc_v_val(void);	//获取温度传感器端的电压值
 float get_ntc_r_val(void);	//获取温度传感器端的电阻值
 float get_ntc_t_val(void);	//获取温度传感器的温度
 float get_vbus_val(void);		//获取电源电压值
- 
+void motor_run(void);
+
+
 #endif /* __BSP_ADC_H */

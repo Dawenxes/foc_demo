@@ -308,7 +308,7 @@ float hall_speed;
 int update = 0;
 
 void HAL_TIM_TriggerCallback(TIM_HandleTypeDef *htim) {
- /*   float temp;
+    float temp;
     temp = (float) (HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1));
     hall_angle_add = (float) HALL_ANGLE_FACTOR / (float) (temp);
     hall_speed = (float) HALL_SPEED_FACTOR / (float) (temp);
@@ -333,12 +333,14 @@ void HAL_TIM_TriggerCallback(TIM_HandleTypeDef *htim) {
         hall_angle += 2.0f * PI;
     } else if (hall_angle > (2.0f * PI)) {
         hall_angle -= 2.0f * PI;
-    }*/
-        uint8_t step = 0;
-        step = get_hall_state();
+    }
+#if 0
+    uint8_t step = 0;
+    step = get_hall_state();
 
-        OUTPUT_PWM(step);
-        update = 0;
+    OUTPUT_PWM(step);
+    update = 0;
+#endif
 }
 
 void OUTPUT_PWM(uint8_t step) {

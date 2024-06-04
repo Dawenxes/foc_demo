@@ -74,7 +74,8 @@ int main(void) {
     /* USER CODE BEGIN Init */
     __IO uint16_t ChannelPulse = PWM_MAX_PERIOD_COUNT / 10;
     uint8_t i = 0;
-    uint8_t flag = 0;
+    uint8_t motor_start_stop = 0;
+    uint8_t motor_start_stop_pre = 1;
     /* USER CODE END Init */
 
     /* Configure the system clock */
@@ -100,49 +101,19 @@ int main(void) {
         /* USER CODE END WHILE */
         /* USER CODE BEGIN 3 */
 
-
-        if (Key_Scan(KEY1_GPIO_Port, KEY1_Pin) == KEY_ON) {
-            set_bldcm_speed(ChannelPulse);
-            set_bldcm_enable();
-            LED2_ON
-        }
-
-        if (Key_Scan(KEY2_GPIO_Port, KEY2_Pin) == KEY_ON) {
-            set_bldcm_disable();
-            LED2_OFF
-        }
-
-        if (Key_Scan(KEY3_GPIO_Port, KEY3_Pin) == KEY_ON) {
-            ChannelPulse += PWM_MAX_PERIOD_COUNT / 10;
-
-            if (ChannelPulse > PWM_MAX_PERIOD_COUNT)
-                ChannelPulse = PWM_MAX_PERIOD_COUNT;
-
-            set_bldcm_speed(ChannelPulse);
-        }
-
-        if (Key_Scan(KEY4_GPIO_Port, KEY4_Pin) == KEY_ON) {
-            if (ChannelPulse < PWM_MAX_PERIOD_COUNT / 10)
-                ChannelPulse = 0;
-            else
-                ChannelPulse -= PWM_MAX_PERIOD_COUNT / 10;
-
-            set_bldcm_speed(ChannelPulse);
-        }
-
-        if (Key_Scan(KEY5_GPIO_Port, KEY5_Pin) == KEY_ON) {
-            set_bldcm_direction((++i % 2) ? MOTOR_FWD : MOTOR_REV);
-        }
-        if (HAL_GetTick() % 50 == 0 && flag == 0) {
-            flag = 1;
-            int32_t current_v = get_curr_val_v();
-            int32_t current_u = get_curr_val_u();
-            int32_t current_w = get_curr_val_w();
-            printf("电源电压=%0.1fV, T=%0.1f度,U相电流=%dmA,V相电流=%dmA,W相电流=%dmA\r\n",
-                   get_vbus_val(), get_ntc_t_val(), current_v, current_u, current_w);
-        } else if (HAL_GetTick() % 50 != 0 && flag == 1) {
-            flag = 0;
-        }
+        delay_ms(1000);
+//        if (HAL_GetTick() % 50 == 0 && flag == 0) {
+//            flag = 1;
+//            int32_t current_v = get_curr_val_v();
+//            int32_t current_u = get_curr_val_u();
+//            int32_t current_w = get_curr_val_w();
+//            float current_vbus = get_vbus_val();
+//            float current_temp = get_ntc_t_val();
+//            printf("电源电压=%fV, T=%0.1f度,U相电流=%dmA,V相电流=%dmA,W相电流=%dmA\r\n",
+//                   current_vbus, current_temp, current_v, current_u, current_w);
+//        } else if (HAL_GetTick() % 50 != 0 && flag == 1) {
+//            flag = 0;
+//        }
     }
     /* USER CODE END 3 */
 }

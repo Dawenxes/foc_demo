@@ -52,6 +52,10 @@ void set_pwm_pulse(uint16_t pulse);
 void hall_enable(void);
 void hall_disable(void);
 void OUTPUT_PWM(uint8_t step);
+
+extern float hall_angle;
+extern float hall_angle_add;
+extern float hall_speed;
 /* USER CODE END Prototypes */
 
 #ifdef __cplusplus

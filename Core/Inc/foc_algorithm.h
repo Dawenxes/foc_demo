@@ -3,13 +3,14 @@
 #define RTW_HEADER_foc_algorithm_h_
 #include <stddef.h>
 #ifndef foc_algorithm_COMMON_INCLUDES_
-# define foc_algorithm_COMMON_INCLUDES_
+#define foc_algorithm_COMMON_INCLUDES_
 #include "rtwtypes.h"
 #endif                               
 
 #include "MW_target_hardware_resources.h"
 #include "mw_cmsis.h"
 #include "speed_pid.h"
+#include "main.h"
 
 #ifndef rtmGetErrorStatus
 # define rtmGetErrorStatus(rtm)        ((rtm)->errorStatus)

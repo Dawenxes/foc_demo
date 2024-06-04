@@ -114,36 +114,11 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* uartHandle)
 }
 
 /* USER CODE BEGIN 1 */
-void Usart_SendString(uint8_t *str)
+uint8_t __io_putchar(int ch)
 {
-    unsigned int k=0;
-    do
-    {
-        HAL_UART_Transmit(&huart1,(uint8_t *)(str + k) ,1,1000);
-        k++;
-    } while(*(str + k)!='\0');
-
-}
-__attribute__((weak)) int fputc(int ch, FILE *f)
-{
-    HAL_UART_Transmit(&huart1, (uint8_t *)&ch, 1, 1000);
-
-    return (ch);
+    uint8_t temp[1]={ch};
+    HAL_UART_Transmit(&huart1,temp,1,2);
+    return(ch);
 }
 
-__attribute__((weak)) int fgetc(FILE *f)
-{
-
-    int ch;
-    HAL_UART_Receive(&huart1, (uint8_t *)&ch, 1, 1000);
-    return (ch);
-}
-__attribute__((weak)) int _write(int file, char *ptr, int len){
-    /* 发送一个字节数据到串口DEBUG_USART */
-
-    if (HAL_UART_Transmit(&huart1, (uint8_t *) ptr, len, 0xffff) != HAL_OK) {
-        Error_Handler();
-    }
-    return len;
-}
 /* USER CODE END 1 */
