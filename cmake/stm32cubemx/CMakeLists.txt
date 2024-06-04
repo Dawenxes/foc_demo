@@ -32,6 +32,7 @@ target_sources(stm32cubemx INTERFACE
     ../../Core/Src/bsp_bldcm_control.c
     ../../Core/Src/L_identification_wrapper.c
     ../../Core/Src/R_flux_identification_wrapper.c
+    ../../Core/Src/delay.c
     ../../Core/Src/stm32f4xx_it.c
     ../../Core/Src/stm32f4xx_hal_msp.c
     ../../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rcc.c

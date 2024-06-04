@@ -16,8 +16,6 @@
   */
 
 #include "bsp_adc.h"
-#include "usart.h"
-#include <math.h>
 
 
 DMA_HandleTypeDef DMA_Init_Handle;

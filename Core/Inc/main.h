@@ -35,6 +35,11 @@ extern "C" {
 #include "arm_math.h"
 #include <stdio.h>
 #include <math.h>
+#include "bsp_adc.h"
+#include "delay.h"
+#include "tim.h"
+#include "usart.h"
+#include "gpio.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/

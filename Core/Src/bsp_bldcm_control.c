@@ -29,6 +29,8 @@ static void sd_gpio_config(void);
   * @retval 无
   */
 void bldcm_init(void) {
+    MX_TIM8_Init();
+    MX_TIM5_Init();
     sd_gpio_config();        // sd 引脚初始化
 }
 
