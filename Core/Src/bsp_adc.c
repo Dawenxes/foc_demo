@@ -4,13 +4,13 @@
   * @author  long
   * @version V1.0
   * @date    2015-xx-xx
-  * @brief   NTCÇı¶¯
+  * @brief   NTCé©±åŠ¨
   ******************************************************************************
   * @attention
   *
-  * ÊµÑéÆ½Ì¨:Ò°»ğ  STM32 F407 ¿ª·¢°å  
-  * ÂÛÌ³    :http://www.firebbs.cn
-  * ÌÔ±¦    :http://firestm32.taobao.com
+  * å®éªŒå¹³å°:é‡ç«  STM32 F407 å¼€å‘æ¿  
+  * è®ºå›    :http://www.firebbs.cn
+  * æ·˜å®    :http://firestm32.taobao.com
   *
   ******************************************************************************
   */
@@ -21,30 +21,24 @@
 DMA_HandleTypeDef DMA_Init_Handle;
 ADC_HandleTypeDef ADC_Handle;
 
-static int16_t adc_buff[ADC_NUM_MAX];    // µçÑ¹²É¼¯»º³åÇø
-static int16_t vbus_adc_mean = 0;        // µçÔ´µçÑ¹ ACD ²ÉÑù½á¹ûÆ½¾ùÖµ
-static uint32_t adc_mean_t = 0;        // Æ½¾ùÖµÀÛ¼Ó
-static uint32_t adc_mean_sum_u = 0;        // Æ½¾ùÖµÀÛ¼Ó
-static uint32_t adc_mean_sum_v = 0;        // Æ½¾ùÖµÀÛ¼Ó
-static uint32_t adc_mean_sum_w = 0;        // Æ½¾ùÖµÀÛ¼Ó
-static uint32_t adc_mean_count_u = 0;      // ÀÛ¼Ó¼ÆÊı
-static uint32_t adc_mean_count_v = 0;      // ÀÛ¼Ó¼ÆÊı
-static uint32_t adc_mean_count_w = 0;      // ÀÛ¼Ó¼ÆÊı
+static int16_t adc_buff[ADC_NUM_MAX];    // ç”µå‹é‡‡é›†ç¼“å†²åŒº
+static int16_t vbus_adc_mean = 0;        // ç”µæºç”µå‹ ACD é‡‡æ ·ç»“æœå¹³å‡å€¼
+static uint32_t adc_mean_t = 0;        // å¹³å‡å€¼ç´¯åŠ 
+static uint32_t adc_mean_sum_u = 0;        // å¹³å‡å€¼ç´¯åŠ 
+static uint32_t adc_mean_sum_v = 0;        // å¹³å‡å€¼ç´¯åŠ 
+static uint32_t adc_mean_sum_w = 0;        // å¹³å‡å€¼ç´¯åŠ 
+static uint32_t adc_mean_count_u = 0;      // ç´¯åŠ è®¡æ•°
+static uint32_t adc_mean_count_v = 0;      // ç´¯åŠ è®¡æ•°
+static uint32_t adc_mean_count_w = 0;      // ç´¯åŠ è®¡æ•°
 
 
-int32_t ia_test,ib_test,ic_test;
+int32_t ia_test, ib_test, ic_test;
 //float err;
 
 
-double Ia,Ib,Ic;
-float Ia_test,Ib_test,Ic_test;
+double Ia, Ib, Ic;
 float Vbus;
-uint16_t ADC1ConvertedValue[5];
 uint16_t i = 0;
-uint32_t A_offset,B_offset;
-uint8_t get_offset_flag = 0;
-uint8_t get_offset_sample_cnt = 0;
-u8 oled_display_sample_freq = 0;
 u8 speed_close_loop_flag;
 float Iq_ref;
 float EKF_Hz;
@@ -55,23 +49,24 @@ float theta;
 extern float Rs;
 extern float Ls;
 extern float flux;
+
 /**
-  * @brief  ADC Í¨µÀÒı½Å³õÊ¼»¯
-  * @param  ÎŞ
-  * @retval ÎŞ
+  * @brief  ADC é€šé“å¼•è„šåˆå§‹åŒ–
+  * @param  æ— 
+  * @retval æ— 
   */
 static void ADC_GPIO_Config(void) {
     GPIO_InitTypeDef GPIO_InitStructure;
-    // Ê¹ÄÜ GPIO Ê±ÖÓ
+    // ä½¿èƒ½ GPIO æ—¶é’Ÿ
     TEMP_ADC_GPIO_CLK_ENABLE();
     VBUS_GPIO_CLK_ENABLE();
     CURR_U_ADC_GPIO_CLK_ENABLE();
     CURR_V_ADC_GPIO_CLK_ENABLE();
     CURR_W_ADC_GPIO_CLK_ENABLE();
-    // ÅäÖÃ IO
+    // é…ç½® IO
     GPIO_InitStructure.Pin = TEMP_ADC_GPIO_PIN;
     GPIO_InitStructure.Mode = GPIO_MODE_ANALOG;
-    GPIO_InitStructure.Pull = GPIO_NOPULL; //²»ÉÏÀ­²»ÏÂÀ­
+    GPIO_InitStructure.Pull = GPIO_NOPULL; //ä¸ä¸Šæ‹‰ä¸ä¸‹æ‹‰
     HAL_GPIO_Init(TEMP_ADC_GPIO_PORT, &GPIO_InitStructure);
 
     GPIO_InitStructure.Pin = VBUS_GPIO_PIN;
@@ -88,76 +83,76 @@ static void ADC_GPIO_Config(void) {
 }
 
 void adc_dma_init(void) {
-    // ------------------DMA Init ½á¹¹Ìå²ÎÊı ³õÊ¼»¯--------------------------
-    // ADC3Ê¹ÓÃDMA2£¬Êı¾İÁ÷0£¬Í¨µÀ0£¬Õâ¸öÊÇÊÖ²á¹Ì¶¨ËÀµÄ
-    // ¿ªÆôDMAÊ±ÖÓ
+    // ------------------DMA Init ç»“æ„ä½“å‚æ•° åˆå§‹åŒ–--------------------------
+    // ADC3ä½¿ç”¨DMA2ï¼Œæ•°æ®æµ0ï¼Œé€šé“0ï¼Œè¿™ä¸ªæ˜¯æ‰‹å†Œå›ºå®šæ­»çš„
+    // å¼€å¯DMAæ—¶é’Ÿ
     TEMP_ADC_DMA_CLK_ENABLE();
-    // Êı¾İ´«ÊäÍ¨µÀ
+    // æ•°æ®ä¼ è¾“é€šé“
     DMA_Init_Handle.Instance = TEMP_ADC_DMA_STREAM;
-    // Êı¾İ´«Êä·½ÏòÎªÍâÉèµ½´æ´¢Æ÷	
+    // æ•°æ®ä¼ è¾“æ–¹å‘ä¸ºå¤–è®¾åˆ°å­˜å‚¨å™¨	
     DMA_Init_Handle.Init.Direction = DMA_PERIPH_TO_MEMORY;
-    // ÍâÉè¼Ä´æÆ÷Ö»ÓĞÒ»¸ö£¬µØÖ·²»ÓÃµİÔö
+    // å¤–è®¾å¯„å­˜å™¨åªæœ‰ä¸€ä¸ªï¼Œåœ°å€ä¸ç”¨é€’å¢
     DMA_Init_Handle.Init.PeriphInc = DMA_PINC_DISABLE;
-    // ´æ´¢Æ÷µØÖ·¹Ì¶¨
+    // å­˜å‚¨å™¨åœ°å€å›ºå®š
     DMA_Init_Handle.Init.MemInc = DMA_MINC_ENABLE;
-    // ÍâÉèÊı¾İ´óĞ¡Îª°ë×Ö£¬¼´Á½¸ö×Ö½Ú
+    // å¤–è®¾æ•°æ®å¤§å°ä¸ºåŠå­—ï¼Œå³ä¸¤ä¸ªå­—èŠ‚
     DMA_Init_Handle.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
-    //	´æ´¢Æ÷Êı¾İ´óĞ¡Ò²Îª°ë×Ö£¬¸úÍâÉèÊı¾İ´óĞ¡ÏàÍ¬
+    //	å­˜å‚¨å™¨æ•°æ®å¤§å°ä¹Ÿä¸ºåŠå­—ï¼Œè·Ÿå¤–è®¾æ•°æ®å¤§å°ç›¸åŒ
     DMA_Init_Handle.Init.MemDataAlignment = DMA_MDATAALIGN_HALFWORD;
-    // Ñ­»·´«ÊäÄ£Ê½
+    // å¾ªç¯ä¼ è¾“æ¨¡å¼
     DMA_Init_Handle.Init.Mode = DMA_CIRCULAR;
-    // DMA ´«ÊäÍ¨µÀÓÅÏÈ¼¶Îª¸ß£¬µ±Ê¹ÓÃÒ»¸öDMAÍ¨µÀÊ±£¬ÓÅÏÈ¼¶ÉèÖÃ²»Ó°Ïì
+    // DMA ä¼ è¾“é€šé“ä¼˜å…ˆçº§ä¸ºé«˜ï¼Œå½“ä½¿ç”¨ä¸€ä¸ªDMAé€šé“æ—¶ï¼Œä¼˜å…ˆçº§è®¾ç½®ä¸å½±å“
     DMA_Init_Handle.Init.Priority = DMA_PRIORITY_HIGH;
-    // ½ûÖ¹DMA FIFO	£¬Ê¹ÓÃÖ±Á¬Ä£Ê½
+    // ç¦æ­¢DMA FIFO	ï¼Œä½¿ç”¨ç›´è¿æ¨¡å¼
     DMA_Init_Handle.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
-    // FIFO ´óĞ¡£¬FIFOÄ£Ê½½ûÖ¹Ê±£¬Õâ¸ö²»ÓÃÅäÖÃ
+    // FIFO å¤§å°ï¼ŒFIFOæ¨¡å¼ç¦æ­¢æ—¶ï¼Œè¿™ä¸ªä¸ç”¨é…ç½®
     DMA_Init_Handle.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_HALFFULL;
     DMA_Init_Handle.Init.MemBurst = DMA_MBURST_SINGLE;
     DMA_Init_Handle.Init.PeriphBurst = DMA_PBURST_SINGLE;
-    // Ñ¡Ôñ DMA Í¨µÀ£¬Í¨µÀ´æÔÚÓÚÁ÷ÖĞ
+    // é€‰æ‹© DMA é€šé“ï¼Œé€šé“å­˜åœ¨äºæµä¸­
     DMA_Init_Handle.Init.Channel = TEMP_ADC_DMA_CHANNEL;
-    //³õÊ¼»¯DMAÁ÷£¬Á÷Ïàµ±ÓÚÒ»¸ö´óµÄ¹ÜµÀ£¬¹ÜµÀÀïÃæÓĞºÜ¶àÍ¨µÀ
+    //åˆå§‹åŒ–DMAæµï¼Œæµç›¸å½“äºä¸€ä¸ªå¤§çš„ç®¡é“ï¼Œç®¡é“é‡Œé¢æœ‰å¾ˆå¤šé€šé“
     HAL_DMA_Init(&DMA_Init_Handle);
 
     __HAL_LINKDMA(&ADC_Handle, DMA_Handle, DMA_Init_Handle);
 }
 
 /**
-  * @brief  ADC Ä£Ê½ÅäÖÃ
-  * @param  ÎŞ
-  * @retval ÎŞ
+  * @brief  ADC æ¨¡å¼é…ç½®
+  * @param  æ— 
+  * @retval æ— 
   */
 static void ADC_Mode_Config(void) {
-    // ¿ªÆôADCÊ±ÖÓ
+    // å¼€å¯ADCæ—¶é’Ÿ
     TEMP_ADC_CLK_ENABLE();
-    // -------------------ADC Init ½á¹¹Ìå ²ÎÊı ³õÊ¼»¯------------------------
+    // -------------------ADC Init ç»“æ„ä½“ å‚æ•° åˆå§‹åŒ–------------------------
     // ADC3
     ADC_Handle.Instance = TEMP_ADC;
-    // Ê±ÖÓÎªfpclk 4·ÖÆµ	
+    // æ—¶é’Ÿä¸ºfpclk 4åˆ†é¢‘	
     ADC_Handle.Init.ClockPrescaler = ADC_CLOCKPRESCALER_PCLK_DIV4;
-    // ADC ·Ö±æÂÊ
+    // ADC åˆ†è¾¨ç‡
     ADC_Handle.Init.Resolution = ADC_RESOLUTION_12B;
-    // É¨ÃèÄ£Ê½£¬¶àÍ¨µÀ²É¼¯²ÅĞèÒª	
+    // æ‰«ææ¨¡å¼ï¼Œå¤šé€šé“é‡‡é›†æ‰éœ€è¦	
     ADC_Handle.Init.ScanConvMode = ENABLE;
-    // Á¬Ğø×ª»»	
+    // è¿ç»­è½¬æ¢	
     ADC_Handle.Init.ContinuousConvMode = ENABLE;
-    // ·ÇÁ¬Ğø×ª»»	
+    // éè¿ç»­è½¬æ¢	
     ADC_Handle.Init.DiscontinuousConvMode = DISABLE;
-    // ·ÇÁ¬Ğø×ª»»¸öÊı
+    // éè¿ç»­è½¬æ¢ä¸ªæ•°
     ADC_Handle.Init.NbrOfDiscConversion = 0;
-    //½ûÖ¹Íâ²¿±ßÑØ´¥·¢    
+    //ç¦æ­¢å¤–éƒ¨è¾¹æ²¿è§¦å‘    
     ADC_Handle.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
-    //Ê¹ÓÃÈí¼ş´¥·¢
+    //ä½¿ç”¨è½¯ä»¶è§¦å‘
     ADC_Handle.Init.ExternalTrigConv = ADC_SOFTWARE_START;
-    //Êı¾İÓÒ¶ÔÆë	
+    //æ•°æ®å³å¯¹é½	
     ADC_Handle.Init.DataAlign = ADC_DATAALIGN_RIGHT;
-    //×ª»»Í¨µÀ 5¸ö
+    //è½¬æ¢é€šé“ 5ä¸ª
     ADC_Handle.Init.NbrOfConversion = 5;
-    //Ê¹ÄÜÁ¬Ğø×ª»»ÇëÇó
+    //ä½¿èƒ½è¿ç»­è½¬æ¢è¯·æ±‚
     ADC_Handle.Init.DMAContinuousRequests = ENABLE;
-    //×ª»»Íê³É±êÖ¾
+    //è½¬æ¢å®Œæˆæ ‡å¿—
     ADC_Handle.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
-    // ³õÊ¼»¯ADC	                          
+    // åˆå§‹åŒ–ADC	                          
     HAL_ADC_Init(&ADC_Handle);
 
     //---------------------------------------------------------------------------
@@ -165,45 +160,45 @@ static void ADC_Mode_Config(void) {
 
     ADC_Config.Channel = TEMP_ADC_CHANNEL;
     ADC_Config.Rank = 1;
-    // ²ÉÑùÊ±¼ä¼ä¸ô	
+    // é‡‡æ ·æ—¶é—´é—´éš”	
     ADC_Config.SamplingTime = ADC_SAMPLETIME_3CYCLES;
     ADC_Config.Offset = 0;
-    // ÅäÖÃ ADC Í¨µÀ×ª»»Ë³ĞòÎª1£¬µÚÒ»¸ö×ª»»£¬²ÉÑùÊ±¼äÎª3¸öÊ±ÖÓÖÜÆÚ
+    // é…ç½® ADC é€šé“è½¬æ¢é¡ºåºä¸º1ï¼Œç¬¬ä¸€ä¸ªè½¬æ¢ï¼Œé‡‡æ ·æ—¶é—´ä¸º3ä¸ªæ—¶é’Ÿå‘¨æœŸ
     HAL_ADC_ConfigChannel(&ADC_Handle, &ADC_Config);
 
-    // ÅäÖÃ ADC Í¨µÀ×ª»»Ë³ĞòÎª1£¬µÚÒ»¸ö×ª»»£¬²ÉÑùÊ±¼äÎª3¸öÊ±ÖÓÖÜÆÚ
+    // é…ç½® ADC é€šé“è½¬æ¢é¡ºåºä¸º1ï¼Œç¬¬ä¸€ä¸ªè½¬æ¢ï¼Œé‡‡æ ·æ—¶é—´ä¸º3ä¸ªæ—¶é’Ÿå‘¨æœŸ
 
     ADC_Config.Channel = VBUS_ADC_CHANNEL;
     ADC_Config.Rank = 2;
-    // ²ÉÑùÊ±¼ä¼ä¸ô	
+    // é‡‡æ ·æ—¶é—´é—´éš”	
     ADC_Config.SamplingTime = ADC_SAMPLETIME_3CYCLES;
     ADC_Config.Offset = 0;
     HAL_ADC_ConfigChannel(&ADC_Handle, &ADC_Config);
 
     ADC_Config.Channel = CURR_U_ADC_CHANNEL;
     ADC_Config.Rank = 3;
-    // ²ÉÑùÊ±¼ä¼ä¸ô	
+    // é‡‡æ ·æ—¶é—´é—´éš”	
     ADC_Config.SamplingTime = ADC_SAMPLETIME_3CYCLES;
     ADC_Config.Offset = 0;
     HAL_ADC_ConfigChannel(&ADC_Handle, &ADC_Config);
 
     ADC_Config.Channel = CURR_V_ADC_CHANNEL;
     ADC_Config.Rank = 4;
-    // ²ÉÑùÊ±¼ä¼ä¸ô	
+    // é‡‡æ ·æ—¶é—´é—´éš”	
     ADC_Config.SamplingTime = ADC_SAMPLETIME_3CYCLES;
     ADC_Config.Offset = 0;
     HAL_ADC_ConfigChannel(&ADC_Handle, &ADC_Config);
 
     ADC_Config.Channel = CURR_W_ADC_CHANNEL;
     ADC_Config.Rank = 5;
-    // ²ÉÑùÊ±¼ä¼ä¸ô	
+    // é‡‡æ ·æ—¶é—´é—´éš”	
     ADC_Config.SamplingTime = ADC_SAMPLETIME_3CYCLES;
     ADC_Config.Offset = 0;
     if (HAL_ADC_ConfigChannel(&ADC_Handle, &ADC_Config) != HAL_OK) {
         while (1);
     }
 
-    // ÍâÉèÖĞ¶ÏÓÅÏÈ¼¶ÅäÖÃºÍÊ¹ÄÜÖĞ¶ÏÅäÖÃ
+    // å¤–è®¾ä¸­æ–­ä¼˜å…ˆçº§é…ç½®å’Œä½¿èƒ½ä¸­æ–­é…ç½®
     HAL_NVIC_SetPriority(ADC_DMA_IRQ, 1, 1);
     HAL_NVIC_EnableIRQ(ADC_DMA_IRQ);
 
@@ -211,9 +206,9 @@ static void ADC_Mode_Config(void) {
 }
 
 /**
-  * @brief  ADC ²É¼¯³õÊ¼»¯
-  * @param  ÎŞ
-  * @retval ÎŞ
+  * @brief  ADC é‡‡é›†åˆå§‹åŒ–
+  * @param  æ— 
+  * @retval æ— 
   */
 void ADC_Init(void) {
     ADC_GPIO_Config();
@@ -226,100 +221,93 @@ void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef *hadc) {
 }
 
 /**
-  * @brief  ³£¹æ×ª»»ÔÚ·Ç×èÈûÄ£Ê½ÏÂÍê³É»Øµ÷
-  * @param  hadc: ADC  ¾ä±ú.
-  * @retval ÎŞ
+  * @brief  å¸¸è§„è½¬æ¢åœ¨éé˜»å¡æ¨¡å¼ä¸‹å®Œæˆå›è°ƒ
+  * @param  hadc: ADC  å¥æŸ„.
+  * @retval æ— 
   */
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
 
     int32_t adc_mean = 0;
-    HAL_ADC_Stop_DMA(hadc);       // Í£Ö¹ ADC ²ÉÑù£¬´¦ÀíÍêÒ»´ÎÊı¾İÔÚ¼ÌĞø²ÉÑù
+    HAL_ADC_Stop_DMA(hadc);       // åœæ­¢ ADC é‡‡æ ·ï¼Œå¤„ç†å®Œä¸€æ¬¡æ•°æ®åœ¨ç»§ç»­é‡‡æ ·
 
-    /* ¼ÆËãÎÂ¶ÈÍ¨µÀ²ÉÑùµÄÆ½¾ùÖµ */
+    /* è®¡ç®—æ¸©åº¦é€šé“é‡‡æ ·çš„å¹³å‡å€¼ */
     for (uint32_t count = 0; count < ADC_NUM_MAX; count += 5) {
         adc_mean += (int32_t) adc_buff[count];
     }
-    adc_mean_t = adc_mean / (ADC_NUM_MAX_COUNT);    // ±£´æÆ½¾ùÖµ
+    adc_mean_t = adc_mean / (ADC_NUM_MAX_COUNT);    // ä¿å­˜å¹³å‡å€¼
     adc_mean = 0;
 
 
-    /* ¼ÆËãµçÑ¹Í¨µÀ²ÉÑùµÄÆ½¾ùÖµ */
+    /* è®¡ç®—ç”µå‹é€šé“é‡‡æ ·çš„å¹³å‡å€¼ */
     for (uint32_t count = 1; count < ADC_NUM_MAX; count += 5) {
         adc_mean += (int32_t) adc_buff[count];
     }
 
-    vbus_adc_mean = adc_mean / (ADC_NUM_MAX_COUNT);    // ±£´æÆ½¾ùÖµ
+    vbus_adc_mean = adc_mean / (ADC_NUM_MAX_COUNT);    // ä¿å­˜å¹³å‡å€¼
     adc_mean = 0;
 #if 1
-    /* ¼ÆËãµçÁ÷Í¨µÀ²ÉÑùµÄÆ½¾ùÖµ */
+    /* è®¡ç®—ç”µæµé€šé“é‡‡æ ·çš„å¹³å‡å€¼ */
     for (uint32_t count = 2; count < ADC_NUM_MAX; count += 5) {
         adc_mean += (uint32_t) adc_buff[count];
     }
 
-    adc_mean_sum_u += adc_mean / (ADC_NUM_MAX_COUNT);    // ÀÛ¼ÓµçÑ¹
+    adc_mean_sum_u += adc_mean / (ADC_NUM_MAX_COUNT);    // ç´¯åŠ ç”µå‹
     adc_mean_count_u++;
     adc_mean = 0;
-    /* ¼ÆËãµçÁ÷Í¨µÀ²ÉÑùµÄÆ½¾ùÖµ */
+    /* è®¡ç®—ç”µæµé€šé“é‡‡æ ·çš„å¹³å‡å€¼ */
     for (uint32_t count = 3; count < ADC_NUM_MAX; count += 5) {
         adc_mean += (uint32_t) adc_buff[count];
     }
 
-    adc_mean_sum_v += adc_mean / (ADC_NUM_MAX_COUNT);    // ÀÛ¼ÓµçÑ¹
+    adc_mean_sum_v += adc_mean / (ADC_NUM_MAX_COUNT);    // ç´¯åŠ ç”µå‹
     adc_mean_count_v++;
     adc_mean = 0;
-    /* ¼ÆËãµçÁ÷Í¨µÀ²ÉÑùµÄÆ½¾ùÖµ */
+    /* è®¡ç®—ç”µæµé€šé“é‡‡æ ·çš„å¹³å‡å€¼ */
     for (uint32_t count = 4; count < ADC_NUM_MAX; count += 5) {
         adc_mean += (uint32_t) adc_buff[count];
     }
 
-    adc_mean_sum_w += adc_mean / (ADC_NUM_MAX_COUNT);    // ÀÛ¼ÓµçÑ¹
+    adc_mean_sum_w += adc_mean / (ADC_NUM_MAX_COUNT);    // ç´¯åŠ ç”µå‹
     adc_mean_count_w++;
     adc_mean = 0;
 #else
     vbus_adc_mean = adc_buff[1];
-        /* ¼ÆËãµçÁ÷Í¨µÀ²ÉÑùµÄÆ½¾ùÖµ */
+        /* è®¡ç®—ç”µæµé€šé“é‡‡æ ·çš„å¹³å‡å€¼ */
 
 #endif
-    if(get_offset_flag==2)
-    {
+    if (foc_state == MOTOR_RUN) {
         hall_angle += hall_angle_add;
-        if(hall_angle<0.0f)
-        {
-            hall_angle += 2.0f*PI;
-        }
-        else if(hall_angle>(2.0f*PI))
-        {
-            hall_angle -= 2.0f*PI;
+        if (hall_angle < 0.0f) {
+            hall_angle += 2.0f * PI;
+        } else if (hall_angle > (2.0f * PI)) {
+            hall_angle -= 2.0f * PI;
         }
         motor_run();
-
-    }
-    else
-    {
-        if(get_offset_flag==1) {
+    } else {
+        if (foc_state == MOTOR_GET_OFFSET) {
             get_curr_val_u();
             get_curr_val_v();
             get_curr_val_w();
         }
     }
-    HAL_ADC_Start_DMA(&ADC_Handle, (uint32_t *) &adc_buff, ADC_NUM_MAX);    // ¿ªÊ¼ ADC ²ÉÑù
+    HAL_ADC_Start_DMA(&ADC_Handle, (uint32_t *) &adc_buff, ADC_NUM_MAX);    // å¼€å§‹ ADC é‡‡æ ·
 }
 
 /**
-  * @brief  »ñÈ¡ÎÂ¶È´«¸ĞÆ÷¶ËµÄµçÑ¹Öµ
-  * @param  ÎŞ
-  * @retval ×ª»»µÃµ½µÄµçÑ¹Öµ
+  * @brief  è·å–æ¸©åº¦ä¼ æ„Ÿå™¨ç«¯çš„ç”µå‹å€¼
+  * @param  æ— 
+  * @retval è½¬æ¢å¾—åˆ°çš„ç”µå‹å€¼
   */
 float get_ntc_v_val(void) {
-    float vdc = GET_ADC_VDC_VAL(adc_mean_t);      // »ñÈ¡µçÑ¹Öµ
+    float vdc = GET_ADC_VDC_VAL(adc_mean_t);      // è·å–ç”µå‹å€¼
 
     return vdc;
 }
 
 /**
-  * @brief  »ñÈ¡ÎÂ¶È´«¸ĞÆ÷¶ËµÄµç×èÖµ
-  * @param  ÎŞ
-  * @retval ×ª»»µÃµ½µÄµç×èÖµ
+  * @brief  è·å–æ¸©åº¦ä¼ æ„Ÿå™¨ç«¯çš„ç”µé˜»å€¼
+  * @param  æ— 
+  * @retval è½¬æ¢å¾—åˆ°çš„ç”µé˜»å€¼
   */
 float get_ntc_r_val(void) {
     float r = 0;
@@ -331,198 +319,179 @@ float get_ntc_r_val(void) {
 }
 
 /**
-  * @brief  »ñÈ¡ÎÂ¶È´«¸ĞÆ÷µÄÎÂ¶È
-  * @param  ÎŞ
-  * @retval ×ª»»µÃµ½µÄÎÂ¶È£¬µ¥Î»£º£¨¡æ£©
+  * @brief  è·å–æ¸©åº¦ä¼ æ„Ÿå™¨çš„æ¸©åº¦
+  * @param  æ— 
+  * @retval è½¬æ¢å¾—åˆ°çš„æ¸©åº¦ï¼Œå•ä½ï¼šï¼ˆâ„ƒï¼‰
   */
 float get_ntc_t_val(void) {
-    float t = 0;             // ²âÁ¿ÎÂ¶È
-    float Rt = 0;            // ²âÁ¿µç×è
-    float Ka = 273.15;       // 0¡æ Ê±¶ÔÓ¦µÄÎÂ¶È£¨¿ª¶ûÎÄ£©
-    float R25 = 10000.0;     // 25¡æ µç×èÖµ
-    float T25 = Ka + 25;     // 25¡æ Ê±¶ÔÓ¦µÄÎÂ¶È£¨¿ª¶ûÎÄ£©
-    float B = 3950.0;        /* B-³£Êı£ºB = ln(R25 / Rt) / (1 / T ¨C 1 / T25)£¬
-                             ÆäÖĞ T = 25 + 273.15 */
+    float t = 0;             // æµ‹é‡æ¸©åº¦
+    float Rt = 0;            // æµ‹é‡ç”µé˜»
+    float Ka = 273.15;       // 0â„ƒ æ—¶å¯¹åº”çš„æ¸©åº¦ï¼ˆå¼€å°”æ–‡ï¼‰
+    float R25 = 10000.0;     // 25â„ƒ ç”µé˜»å€¼
+    float T25 = Ka + 25;     // 25â„ƒ æ—¶å¯¹åº”çš„æ¸©åº¦ï¼ˆå¼€å°”æ–‡ï¼‰
+    float B = 3950.0;        /* B-å¸¸æ•°ï¼šB = ln(R25 / Rt) / (1 / T â€“ 1 / T25)ï¼Œ
+                             å…¶ä¸­ T = 25 + 273.15 */
 
-    Rt = get_ntc_r_val();    // »ñÈ¡µ±Ç°µç×èÖµ
+    Rt = get_ntc_r_val();    // è·å–å½“å‰ç”µé˜»å€¼
 
-    t = B * T25 / (B + log(Rt / R25) * T25) - Ka;    // Ê¹ÓÃ¹«Ê½¼ÆËã
+    t = B * T25 / (B + log(Rt / R25) * T25) - Ka;    // ä½¿ç”¨å…¬å¼è®¡ç®—
 
     return t;
 }
 
 /**
-  * @brief  »ñÈ¡VÏàµÄµçÁ÷Öµ
-  * @param  ÎŞ
-  * @retval ×ª»»µÃµ½µÄµçÁ÷Öµ
+  * @brief  è·å–Vç›¸çš„ç”µæµå€¼
+  * @param  æ— 
+  * @retval è½¬æ¢å¾—åˆ°çš„ç”µæµå€¼
   */
 int32_t get_curr_val_v(void) {
     static uint8_t flag = 0;
-    static uint32_t adc_offset = 0;    // Æ«ÖÃµçÑ¹
-    int16_t curr_adc_mean = 0;         // µçÁ÷ ACD ²ÉÑù½á¹ûÆ½¾ùÖµ
+    static uint32_t adc_offset = 0;    // åç½®ç”µå‹
+    int16_t curr_adc_mean = 0;         // ç”µæµ ACD é‡‡æ ·ç»“æœå¹³å‡å€¼
 
-    curr_adc_mean = adc_mean_sum_v / adc_mean_count_v;    // ±£´æÆ½¾ùÖµ
+    curr_adc_mean = adc_mean_sum_v / adc_mean_count_v;    // ä¿å­˜å¹³å‡å€¼
 
 
     adc_mean_count_v = 0;
     adc_mean_sum_v = 0;
 
     if (flag < 17) {
-        adc_offset = curr_adc_mean;    // ¶à´Î¼ÇÂ¼Æ«ÖÃµçÑ¹£¬´ıÏµÍ³ÎÈ¶¨Æ«ÖÃµçÑ¹²ÅÎªÓĞĞ§Öµ
+        adc_offset = curr_adc_mean;    // å¤šæ¬¡è®°å½•åç½®ç”µå‹ï¼Œå¾…ç³»ç»Ÿç¨³å®šåç½®ç”µå‹æ‰ä¸ºæœ‰æ•ˆå€¼
         flag += 1;
         if (flag >= 17) {
-            get_offset_flag = 2;
+            foc_state = MOTOR_RUN;
         }
     }
     if (curr_adc_mean >= adc_offset) {
-        curr_adc_mean -= adc_offset;                     // ¼õÈ¥Æ«ÖÃµçÑ¹
+        curr_adc_mean -= adc_offset;                     // å‡å»åç½®ç”µå‹
     } else {
         curr_adc_mean = 0;
     }
 
-    float vdc = GET_ADC_VDC_VAL(curr_adc_mean);      // »ñÈ¡µçÑ¹Öµ
+    float vdc = GET_ADC_VDC_VAL(curr_adc_mean);      // è·å–ç”µå‹å€¼
 
     return GET_ADC_CURR_VAL(vdc);
 }
 
 /**
-  * @brief  »ñÈ¡UÏàµÄµçÁ÷Öµ
-  * @param  ÎŞ
-  * @retval ×ª»»µÃµ½µÄµçÁ÷Öµ
+  * @brief  è·å–Uç›¸çš„ç”µæµå€¼
+  * @param  æ— 
+  * @retval è½¬æ¢å¾—åˆ°çš„ç”µæµå€¼
   */
 int32_t get_curr_val_u(void) {
     static uint8_t flag = 0;
-    static uint32_t adc_offset = 0;    // Æ«ÖÃµçÑ¹
-    int16_t curr_adc_mean = 0;         // µçÁ÷ ACD ²ÉÑù½á¹ûÆ½¾ùÖµ
+    static uint32_t adc_offset = 0;    // åç½®ç”µå‹
+    int16_t curr_adc_mean = 0;         // ç”µæµ ACD é‡‡æ ·ç»“æœå¹³å‡å€¼
 
-    curr_adc_mean = adc_mean_sum_u / adc_mean_count_u;    // ±£´æÆ½¾ùÖµ
+    curr_adc_mean = adc_mean_sum_u / adc_mean_count_u;    // ä¿å­˜å¹³å‡å€¼
 
 
     adc_mean_count_u = 0;
     adc_mean_sum_u = 0;
 
     if (flag < 17) {
-        adc_offset = curr_adc_mean;    // ¶à´Î¼ÇÂ¼Æ«ÖÃµçÑ¹£¬´ıÏµÍ³ÎÈ¶¨Æ«ÖÃµçÑ¹²ÅÎªÓĞĞ§Öµ
+        adc_offset = curr_adc_mean;    // å¤šæ¬¡è®°å½•åç½®ç”µå‹ï¼Œå¾…ç³»ç»Ÿç¨³å®šåç½®ç”µå‹æ‰ä¸ºæœ‰æ•ˆå€¼
         flag += 1;
         if (flag >= 17) {
-            get_offset_flag = 2;
+            foc_state = MOTOR_RUN;
         }
     }
     if (curr_adc_mean >= adc_offset) {
-        curr_adc_mean -= adc_offset;                     // ¼õÈ¥Æ«ÖÃµçÑ¹
+        curr_adc_mean -= adc_offset;                     // å‡å»åç½®ç”µå‹
     } else {
         curr_adc_mean = 0;
     }
 
-    float vdc = GET_ADC_VDC_VAL(curr_adc_mean);      // »ñÈ¡µçÑ¹Öµ
+    float vdc = GET_ADC_VDC_VAL(curr_adc_mean);      // è·å–ç”µå‹å€¼
 
     return GET_ADC_CURR_VAL(vdc);
 }
 
 /**
-  * @brief  »ñÈ¡WÏàµÄµçÁ÷Öµ
-  * @param  ÎŞ
-  * @retval ×ª»»µÃµ½µÄµçÁ÷Öµ
+  * @brief  è·å–Wç›¸çš„ç”µæµå€¼
+  * @param  æ— 
+  * @retval è½¬æ¢å¾—åˆ°çš„ç”µæµå€¼
   */
 int32_t get_curr_val_w(void) {
     static uint8_t flag = 0;
-    static uint32_t adc_offset = 0;    // Æ«ÖÃµçÑ¹
-    int16_t curr_adc_mean = 0;         // µçÁ÷ ACD ²ÉÑù½á¹ûÆ½¾ùÖµ
+    static uint32_t adc_offset = 0;    // åç½®ç”µå‹
+    int16_t curr_adc_mean = 0;         // ç”µæµ ACD é‡‡æ ·ç»“æœå¹³å‡å€¼
 
-    curr_adc_mean = adc_mean_sum_w / adc_mean_count_w;    // ±£´æÆ½¾ùÖµ
+    curr_adc_mean = adc_mean_sum_w / adc_mean_count_w;    // ä¿å­˜å¹³å‡å€¼
 
 
     adc_mean_count_w = 0;
     adc_mean_sum_w = 0;
 
     if (flag < 17) {
-        adc_offset = curr_adc_mean;    // ¶à´Î¼ÇÂ¼Æ«ÖÃµçÑ¹£¬´ıÏµÍ³ÎÈ¶¨Æ«ÖÃµçÑ¹²ÅÎªÓĞĞ§Öµ
+        adc_offset = curr_adc_mean;    // å¤šæ¬¡è®°å½•åç½®ç”µå‹ï¼Œå¾…ç³»ç»Ÿç¨³å®šåç½®ç”µå‹æ‰ä¸ºæœ‰æ•ˆå€¼
         flag += 1;
         if (flag >= 17) {
-            get_offset_flag = 2;
+            foc_state = MOTOR_RUN;
         }
     }
     if (curr_adc_mean >= adc_offset) {
-        curr_adc_mean -= adc_offset;                     // ¼õÈ¥Æ«ÖÃµçÑ¹
+        curr_adc_mean -= adc_offset;                     // å‡å»åç½®ç”µå‹
     } else {
         curr_adc_mean = 0;
     }
 
-    float vdc = GET_ADC_VDC_VAL(curr_adc_mean);      // »ñÈ¡µçÑ¹Öµ
+    float vdc = GET_ADC_VDC_VAL(curr_adc_mean);      // è·å–ç”µå‹å€¼
 
     return GET_ADC_CURR_VAL(vdc);
 }
 
 /**
-  * @brief  »ñÈ¡µçÔ´µçÑ¹Öµ
-  * @param  ÎŞ
-  * @retval ×ª»»µÃµ½µÄµçÑ¹Öµ
+  * @brief  è·å–ç”µæºç”µå‹å€¼
+  * @param  æ— 
+  * @retval è½¬æ¢å¾—åˆ°çš„ç”µå‹å€¼
   */
 float get_vbus_val(void) {
-    float vdc = GET_ADC_VDC_VAL(vbus_adc_mean);      // »ñÈ¡µçÑ¹Öµ
+    float vdc = GET_ADC_VDC_VAL(vbus_adc_mean);      // è·å–ç”µå‹å€¼
     return GET_VBUS_VAL(vdc);
 }
 
 
-void motor_run(void)
-{
+void motor_run(void) {
     float vbus_temp;
     Vbus = get_vbus_val();
     Ia = get_curr_val_u();
     Ib = get_curr_val_v();
     Ic = get_curr_val_w();
-    Ia_test = Ia;
-    Ib_test = Ib;
-    Ic_test = Ic;
 
-
-    if(speed_close_loop_flag==0)
-    {
-        if((Iq_ref<MOTOR_STARTUP_CURRENT))
-        {
+    if (speed_close_loop_flag == 0) {
+        if ((Iq_ref < MOTOR_STARTUP_CURRENT)) {
             Iq_ref += 0.00003f;
+        } else {
+            speed_close_loop_flag = 1;
         }
-        else
-        {
-            speed_close_loop_flag=1;
-        }
-    }
-    else
-    {
-        if(speed_close_loop_flag==1)
-        {
-            if(Iq_ref>(MOTOR_STARTUP_CURRENT/2.0f))
-            {
+    } else {
+        if (speed_close_loop_flag == 1) {
+            if (Iq_ref > (MOTOR_STARTUP_CURRENT / 2.0f)) {
                 Iq_ref -= 0.001f;
-            }
-            else
-            {
-                speed_close_loop_flag=2;
+            } else {
+                speed_close_loop_flag = 2;
             }
         }
     }
 
 #ifdef  HALL_FOC_SELECT
 
-    if((hall_speed*2.0f*PI)>SPEED_LOOP_CLOSE_RAD_S)
-  {
-    FOC_Input.Id_ref = 0.0f;
-    Speed_Fdk = hall_speed*2.0f*PI;
-    FOC_Input.Iq_ref = Speed_Pid_Out;
-  }
-  else
-  {
-    FOC_Input.Id_ref = 0.0f;
-    FOC_Input.Iq_ref = Iq_ref;
-    Speed_Pid.I_Sum = Iq_ref;
-  }
-  FOC_Input.theta = hall_angle;
-  FOC_Input.speed_fdk = hall_speed*2.0f*PI;
+    if ((hall_speed * 2.0f * PI) > SPEED_LOOP_CLOSE_RAD_S) {
+        FOC_Input.Id_ref = 0.0f;
+        Speed_Fdk = hall_speed * 2.0f * PI;
+        FOC_Input.Iq_ref = Speed_Pid_Out;
+    } else {
+        FOC_Input.Id_ref = 0.0f;
+        FOC_Input.Iq_ref = Iq_ref;
+        Speed_Pid.I_Sum = Iq_ref;
+    }
+    FOC_Input.theta = hall_angle;
+    FOC_Input.speed_fdk = hall_speed * 2.0f * PI;
 
 #endif
 
 #ifdef  SENSORLESS_FOC_SELECT
-
     if(FOC_Output.EKF[2]>SPEED_LOOP_CLOSE_RAD_S)
   {
     FOC_Input.Id_ref = 0.0f;
@@ -541,8 +510,7 @@ void motor_run(void)
 #endif
 
 
-
-    EKF_Hz = FOC_Output.EKF[2]/(2.0f*PI);
+    EKF_Hz = FOC_Output.EKF[2] / (2.0f * PI);
     FOC_Input.Id_ref = 0.0f;
     FOC_Input.Tpwm = PWM_TIM_PULSE_TPWM;         //FOC
     FOC_Input.Udc = Vbus;
@@ -555,17 +523,19 @@ void motor_run(void)
     FOC_Input.ic = Ic;
     foc_algorithm_step();
 
-    if(motor_start_stop==1)
-    {
-        __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_1, (u16)(FOC_Output.Tcmp1));
-        __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_2, (u16)(FOC_Output.Tcmp2));
-        __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (u16)(FOC_Output.Tcmp3));
+    if (foc_state == MOTOR_RUN) {
+        __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_1, (u16) (FOC_Output.Tcmp1));
+        __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_2, (u16) (FOC_Output.Tcmp2));
+        __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (u16) (FOC_Output.Tcmp3));
+        //HAL_TIM_GenerateEvent(&htim8, TIM_EVENTSOURCE_COM);
+        printf("ç”µæºç”µå‹=%fV,Uç›¸ç”µæµ=%dmA,Vç›¸ç”µæµ=%dmA,Wç›¸ç”µæµ=%dmA\r\n",
+               Vbus, Ia, Ib, Ic);
+    } else {
+        __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_1, PWM_TIM_PULSE >> 1);
+        __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_2, PWM_TIM_PULSE >> 1);
+        __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, PWM_TIM_PULSE >> 1);
+        //HAL_TIM_GenerateEvent(&htim8, TIM_EVENTSOURCE_COM);
     }
-    else
-    {
-        __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_1, PWM_TIM_PULSE>>1);
-        __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_2, PWM_TIM_PULSE>>1);
-        __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, PWM_TIM_PULSE>>1);
-    }
+
 }
 /*********************************** END OF FILE *********************************************/

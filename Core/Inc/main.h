@@ -42,7 +42,6 @@ extern "C" {
 #include "gpio.h"
 #include "foc_algorithm.h"
 #include "low_task.h"
-
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -208,7 +207,8 @@ typedef uint8_t u8;
 #define PWM_TIM_FREQ        10000         //HZ
 #define PWM_TIM_PULSE       (PWM_TIM_CLOCK/(2*PWM_TIM_FREQ))
 #define PWM_TIM_PULSE_TPWM  (PWM_TIM_CLOCK/(PWM_TIM_FREQ))
-
+#define DEAD_TIME         ((u16) 5)
+#define PWM_DEAD_TIME     (u16)((unsigned long long)PWM_TIM_CLOCK/2*(unsigned long long)DEAD_TIME/1000000000uL)
 
 #define KEY1_INT_IRQn                   EXTI0_IRQn
 #define KEY1_INT_IRQHandler             EXTI0_IRQHandler

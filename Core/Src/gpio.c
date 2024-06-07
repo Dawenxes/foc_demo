@@ -154,22 +154,21 @@ uint8_t Key_Scan(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin) {
  * @retval      无
  */
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
-    delay_ms(20);      /* 消抖 */
     switch (GPIO_Pin) {
         case KEY1_Pin:
-            if (KEY1 == 1) {
+            if (Key_Scan(KEY1_GPIO_Port, KEY1_Pin) == KEY_ON) {
                 key1_flag = 1;
                 LED1_TOGGLE  /* LED0 状态取反 */
             }
             break;
         case KEY2_Pin:
-            if (KEY2 == 1) {
+            if (Key_Scan(KEY2_GPIO_Port, KEY2_Pin) == KEY_ON) {
                 key2_flag = 1;
                 LED2_TOGGLE;  /* LED0 状态取反 */
             }
             break;
         case KEY3_Pin:
-            if (KEY3 == 1) {
+            if (Key_Scan(KEY3_GPIO_Port, KEY3_Pin) == KEY_ON) {
                 key3_flag = 1;
                 LED3_TOGGLE;
             }

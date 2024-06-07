@@ -63,7 +63,6 @@
 
 extern DMA_HandleTypeDef DMA_Init_Handle;
 extern ADC_HandleTypeDef ADC_Handle;
-extern uint8_t get_offset_flag;
 extern float theta;
 extern float angle;
 extern float Iq_ref;

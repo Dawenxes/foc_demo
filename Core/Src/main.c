@@ -79,8 +79,8 @@ int main(void) {
     /* USER CODE END Init */
 
     /* Configure the system clock */
-    SystemClock_Config();
     HAL_Init();
+    SystemClock_Config();
 
     /* USER CODE BEGIN SysInit */
 
@@ -100,8 +100,7 @@ int main(void) {
     while (1) {
         /* USER CODE END WHILE */
         /* USER CODE BEGIN 3 */
-
-        delay_ms(1000);
+//        static int flag=0;
 //        if (HAL_GetTick() % 50 == 0 && flag == 0) {
 //            flag = 1;
 //            int32_t current_v = get_curr_val_v();
@@ -109,7 +108,7 @@ int main(void) {
 //            int32_t current_w = get_curr_val_w();
 //            float current_vbus = get_vbus_val();
 //            float current_temp = get_ntc_t_val();
-//            printf("电源电压=%fV, T=%0.1f度,U相电流=%dmA,V相电流=%dmA,W相电流=%dmA\r\n",
+//            printf("电源电压=%fV, T=%f度,U相电流=%dmA,V相电流=%dmA,W相电流=%dmA\r\n",
 //                   current_vbus, current_temp, current_v, current_u, current_w);
 //        } else if (HAL_GetTick() % 50 != 0 && flag == 1) {
 //            flag = 0;

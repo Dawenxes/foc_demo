@@ -79,9 +79,9 @@ void MX_TIM8_Init(void) {
 
     /* USER CODE END TIM8_Init 1 */
     htim8.Instance = TIM8;
-    htim8.Init.Prescaler = 2 - 1;
-    htim8.Init.CounterMode = TIM_COUNTERMODE_UP;
-    htim8.Init.Period = 5600 - 1;
+    htim8.Init.Prescaler = 0;
+    htim8.Init.CounterMode = TIM_COUNTERMODE_CENTERALIGNED1;
+    htim8.Init.Period = PWM_TIM_PULSE;
     htim8.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
     htim8.Init.RepetitionCounter = 0;
     htim8.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
@@ -94,7 +94,7 @@ void MX_TIM8_Init(void) {
         Error_Handler();
     }
     sConfigOC.OCMode = TIM_OCMODE_PWM1;
-    sConfigOC.Pulse = 0;
+    sConfigOC.Pulse = PWM_TIM_PULSE>>1;
     sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
     sConfigOC.OCNPolarity = TIM_OCNPOLARITY_HIGH;
     sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
@@ -109,12 +109,12 @@ void MX_TIM8_Init(void) {
     if (HAL_TIM_PWM_ConfigChannel(&htim8, &sConfigOC, TIM_CHANNEL_3) != HAL_OK) {
         Error_Handler();
     }
-    sBreakDeadTimeConfig.OffStateRunMode = TIM_OSSR_DISABLE;
-    sBreakDeadTimeConfig.OffStateIDLEMode = TIM_OSSI_DISABLE;
-    sBreakDeadTimeConfig.LockLevel = TIM_LOCKLEVEL_OFF;
-    sBreakDeadTimeConfig.DeadTime = 0;
+    sBreakDeadTimeConfig.OffStateRunMode = TIM_OSSR_ENABLE;
+    sBreakDeadTimeConfig.OffStateIDLEMode = TIM_OSSI_ENABLE;
+    sBreakDeadTimeConfig.LockLevel = TIM_LOCKLEVEL_1;
+    sBreakDeadTimeConfig.DeadTime = PWM_DEAD_TIME;
     sBreakDeadTimeConfig.BreakState = TIM_BREAK_DISABLE;
-    sBreakDeadTimeConfig.BreakPolarity = TIM_BREAKPOLARITY_HIGH;
+    sBreakDeadTimeConfig.BreakPolarity = TIM_BREAKPOLARITY_LOW;
     sBreakDeadTimeConfig.AutomaticOutput = TIM_AUTOMATICOUTPUT_DISABLE;
     if (HAL_TIMEx_ConfigBreakDeadTime(&htim8, &sBreakDeadTimeConfig) != HAL_OK) {
         Error_Handler();
@@ -264,9 +264,6 @@ void hall_enable(void) {
     __HAL_TIM_ENABLE_IT(&htim5, TIM_IT_UPDATE);
 
     HAL_TIMEx_HallSensor_Start(&htim5);
-
-    LED2_ON;
-
     HAL_TIM_TriggerCallback(&htim5);
 }
 
@@ -274,8 +271,6 @@ void hall_disable(void) {
     __HAL_TIM_DISABLE_IT(&htim5, TIM_IT_TRIGGER);
     __HAL_TIM_DISABLE_IT(&htim5, TIM_IT_UPDATE);
     HAL_TIMEx_HallSensor_Stop(&htim5);
-    LED2_OFF;
-
 }
 
 uint8_t get_hall_state(void) {
@@ -496,8 +491,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
     if (update++ > 4) {
         printf("堵转超时\r\n");
         update = 0;
-
-        LED1_ON;
 
         hall_disable();
         stop_pwm_output();
