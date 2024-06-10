@@ -30,6 +30,7 @@ void motor_stop(void) {
 void low_control_task(void) {
     if (foc_state == MOTOR_RUN) {
         motor_start();
+        foc_state = MOTOR_RUNNING;
     } else {
         motor_stop();
         foc_state = MOTOR_STOP;

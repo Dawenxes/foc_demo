@@ -173,17 +173,14 @@ void Error_Handler(void);
           LED4_OFF
 #define KEY_ON    1
 #define KEY_OFF    0
-#define PWM_PERIOD_COUNT     (5600)
-
-#define PWM_MAX_PERIOD_COUNT    (PWM_PERIOD_COUNT - 100)
 
 typedef uint32_t u32;
 typedef uint16_t u16;
 typedef uint8_t u8;
 
-#define HALL_TIM_CLOCK (u32)90000000
+#define HALL_TIM_CLOCK (u32)84000000
 #define HALL_SAMPLE_FREQ (u32)10000
-#define PHASE_SHIFT_ANGLE (float)(60.0f/360.0f*2.0f*PI)         //单位角度
+#define PHASE_SHIFT_ANGLE (float)(0.0f/360.0f*2.0f*PI)         //单位角度
 #define HALL_ANGLE_FACTOR (float)((float)HALL_TIM_CLOCK/(float)HALL_SAMPLE_FREQ*PI/3.0f)
 #define HALL_SPEED_FACTOR (float)((float)HALL_TIM_CLOCK/6.0f)
 

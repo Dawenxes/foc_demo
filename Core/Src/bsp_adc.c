@@ -275,7 +275,7 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
         /* 计算电流通道采样的平均值 */
 
 #endif
-    if (foc_state == MOTOR_RUN) {
+    if (foc_state == MOTOR_RUN||foc_state==MOTOR_RUNNING) {
         hall_angle += hall_angle_add;
         if (hall_angle < 0.0f) {
             hall_angle += 2.0f * PI;
@@ -358,9 +358,6 @@ int32_t get_curr_val_v(void) {
     if (flag < 17) {
         adc_offset = curr_adc_mean;    // 多次记录偏置电压，待系统稳定偏置电压才为有效值
         flag += 1;
-        if (flag >= 17) {
-            foc_state = MOTOR_RUN;
-        }
     }
     if (curr_adc_mean >= adc_offset) {
         curr_adc_mean -= adc_offset;                     // 减去偏置电压
@@ -426,9 +423,6 @@ int32_t get_curr_val_w(void) {
     if (flag < 17) {
         adc_offset = curr_adc_mean;    // 多次记录偏置电压，待系统稳定偏置电压才为有效值
         flag += 1;
-        if (flag >= 17) {
-            foc_state = MOTOR_RUN;
-        }
     }
     if (curr_adc_mean >= adc_offset) {
         curr_adc_mean -= adc_offset;                     // 减去偏置电压
@@ -453,7 +447,6 @@ float get_vbus_val(void) {
 
 
 void motor_run(void) {
-    float vbus_temp;
     Vbus = get_vbus_val();
     Ia = get_curr_val_u();
     Ib = get_curr_val_v();
@@ -523,7 +516,7 @@ void motor_run(void) {
     FOC_Input.ic = Ic;
     foc_algorithm_step();
 
-    if (foc_state == MOTOR_RUN) {
+    if (foc_state == MOTOR_RUN||foc_state==MOTOR_RUNNING) {
         __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_1, (u16) (FOC_Output.Tcmp1));
         __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_2, (u16) (FOC_Output.Tcmp2));
         __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (u16) (FOC_Output.Tcmp3));

@@ -10,7 +10,7 @@
 extern uint16_t hz_100_cnt;
 extern uint8_t motor_start_stop;
 extern enum FOC_STATE {
-    MOTOR_STOP, MOTOR_GET_OFFSET, MOTOR_RUN
+    MOTOR_STOP, MOTOR_GET_OFFSET, MOTOR_RUN,MOTOR_RUNNING
 };
 extern enum FOC_STATE foc_state;
 

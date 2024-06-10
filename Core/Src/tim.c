@@ -38,26 +38,23 @@ void MX_TIM5_Init(void) {
     TIM_MasterConfigTypeDef sMasterConfig = {0};
 
     /* USER CODE BEGIN TIM5_Init 1 */
-
+    __TIM5_CLK_ENABLE();
     /* USER CODE END TIM5_Init 1 */
     htim5.Instance = TIM5;
-    htim5.Init.Prescaler = 128 - 1;
+    htim5.Init.Prescaler = 0;
     htim5.Init.CounterMode = TIM_COUNTERMODE_UP;
-    htim5.Init.Period = 0xffff - 1;
+    htim5.Init.Period = 0xffffffff;
     htim5.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
     htim5.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+
     sConfig.IC1Polarity = TIM_ICPOLARITY_RISING;
     sConfig.IC1Prescaler = TIM_ICPSC_DIV1;
-    sConfig.IC1Filter = 10;
+    sConfig.IC1Filter = 0xf;
     sConfig.Commutation_Delay = 0;
     if (HAL_TIMEx_HallSensor_Init(&htim5, &sConfig) != HAL_OK) {
         Error_Handler();
     }
-    sMasterConfig.MasterOutputTrigger = TIM_TRGO_OC2REF;
-    sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-    if (HAL_TIMEx_MasterConfigSynchronization(&htim5, &sMasterConfig) != HAL_OK) {
-        Error_Handler();
-    }
+
     /* USER CODE BEGIN TIM5_Init 2 */
 
     /* USER CODE END TIM5_Init 2 */
@@ -94,7 +91,7 @@ void MX_TIM8_Init(void) {
         Error_Handler();
     }
     sConfigOC.OCMode = TIM_OCMODE_PWM1;
-    sConfigOC.Pulse = PWM_TIM_PULSE>>1;
+    sConfigOC.Pulse = PWM_TIM_PULSE >> 1;
     sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
     sConfigOC.OCNPolarity = TIM_OCNPOLARITY_HIGH;
     sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
@@ -264,7 +261,6 @@ void hall_enable(void) {
     __HAL_TIM_ENABLE_IT(&htim5, TIM_IT_UPDATE);
 
     HAL_TIMEx_HallSensor_Start(&htim5);
-    HAL_TIM_TriggerCallback(&htim5);
 }
 
 void hall_disable(void) {
@@ -488,20 +484,21 @@ void OUTPUT_PWM(uint8_t step) {
 }
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
-    if (update++ > 4) {
-        printf("堵转超时\r\n");
-        update = 0;
 
-        hall_disable();
-        stop_pwm_output();
-    } else if (update > 2 && update < 4) {
-        uint8_t step = 0;
-        step = get_hall_state();
-        step++;
-        if (step == 7) {
-            step = 1;
-        }
-        OUTPUT_PWM(step);
-    }
+//    if (update++ > 4) {
+//        printf("堵转超时\r\n");
+//        update = 0;
+//
+//        hall_disable();
+//        stop_pwm_output();
+//    } else if (update > 2 && update < 4) {
+//        uint8_t step = 0;
+//        step = get_hall_state();
+//        step++;
+//        if (step == 7) {
+//            step = 1;
+//        }
+//        OUTPUT_PWM(step);
+//    }
 }
 /* USER CODE END 1 */

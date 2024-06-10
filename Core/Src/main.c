@@ -72,10 +72,6 @@ int main(void) {
     /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
 
     /* USER CODE BEGIN Init */
-    __IO uint16_t ChannelPulse = PWM_MAX_PERIOD_COUNT / 10;
-    uint8_t i = 0;
-    uint8_t motor_start_stop = 0;
-    uint8_t motor_start_stop_pre = 1;
     /* USER CODE END Init */
 
     /* Configure the system clock */
