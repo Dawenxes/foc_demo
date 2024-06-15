@@ -35,28 +35,38 @@ void MX_TIM5_Init(void) {
     /* USER CODE END TIM5_Init 0 */
 
     TIM_HallSensor_InitTypeDef sConfig = {0};
-    TIM_MasterConfigTypeDef sMasterConfig = {0};
+    TIM_IC_InitTypeDef icConfig = {0};
+    TIM_SlaveConfigTypeDef slaveConfig = {0};
 
     /* USER CODE BEGIN TIM5_Init 1 */
-    __TIM5_CLK_ENABLE();
     /* USER CODE END TIM5_Init 1 */
     htim5.Instance = TIM5;
     htim5.Init.Prescaler = 0;
     htim5.Init.CounterMode = TIM_COUNTERMODE_UP;
     htim5.Init.Period = 0xffffffff;
     htim5.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-    htim5.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-
-    sConfig.IC1Polarity = TIM_ICPOLARITY_RISING;
-    sConfig.IC1Prescaler = TIM_ICPSC_DIV1;
-    sConfig.IC1Filter = 0xf;
-    sConfig.Commutation_Delay = 0;
-    if (HAL_TIMEx_HallSensor_Init(&htim5, &sConfig) != HAL_OK) {
+    if (HAL_TIM_IC_Init(&htim5) != HAL_OK) {
+        Error_Handler();
+    }
+    icConfig.ICPolarity = TIM_INPUTCHANNELPOLARITY_BOTHEDGE;
+    icConfig.ICSelection = TIM_ICSELECTION_DIRECTTI;
+    icConfig.ICFilter = 0xF;
+    icConfig.ICPrescaler = TIM_ICPSC_DIV1;
+    if (HAL_TIM_IC_ConfigChannel(&htim5, &icConfig, TIM_CHANNEL_1) != HAL_OK) {
         Error_Handler();
     }
 
+
     /* USER CODE BEGIN TIM5_Init 2 */
 
+    HAL_TIM_ConfigTI1Input(&htim5, TIM_TI1SELECTION_XORCOMBINATION);
+
+    slaveConfig.InputTrigger= TIM_TS_TI1FP1;
+    slaveConfig.SlaveMode = TIM_SLAVEMODE_RESET;
+    slaveConfig.TriggerPolarity= TIM_TRIGGERPOLARITY_BOTHEDGE;
+    HAL_TIM_SlaveConfigSynchro(&htim5, &slaveConfig);
+    //__HAL_TIM_ENABLE_IT(&htim5, TIM_IT_UPDATE);
+    HAL_TIM_IC_Start_IT(&htim5, TIM_CHANNEL_1);
     /* USER CODE END TIM5_Init 2 */
 
 }
@@ -123,7 +133,7 @@ void MX_TIM8_Init(void) {
 
 }
 
-void HAL_TIMEx_HallSensor_MspInit(TIM_HandleTypeDef *timex_hallsensorHandle) {
+void HAL_TIM_IC_MspInit(TIM_HandleTypeDef *timex_hallsensorHandle) {
 
     GPIO_InitTypeDef GPIO_InitStruct = {0};
     if (timex_hallsensorHandle->Instance == TIM5) {
@@ -147,7 +157,7 @@ void HAL_TIMEx_HallSensor_MspInit(TIM_HandleTypeDef *timex_hallsensorHandle) {
         HAL_GPIO_Init(GPIOH, &GPIO_InitStruct);
 
         /* TIM5 interrupt Init */
-        HAL_NVIC_SetPriority(TIM5_IRQn, 0, 0);
+        HAL_NVIC_SetPriority(TIM5_IRQn, 0, 1);
         HAL_NVIC_EnableIRQ(TIM5_IRQn);
         /* USER CODE BEGIN TIM5_MspInit 1 */
 
@@ -201,7 +211,7 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef *timHandle) {
 
 }
 
-void HAL_TIMEx_HallSensor_MspDeInit(TIM_HandleTypeDef *timex_hallsensorHandle) {
+void HAL_TIM_IC_MspDeInit(TIM_HandleTypeDef *timex_hallsensorHandle) {
 
     if (timex_hallsensorHandle->Instance == TIM5) {
         /* USER CODE BEGIN TIM5_MspDeInit 0 */
@@ -257,10 +267,10 @@ void set_pwm_pulse(uint16_t pulse) {
 }
 
 void hall_enable(void) {
-    __HAL_TIM_ENABLE_IT(&htim5, TIM_IT_TRIGGER);
-    __HAL_TIM_ENABLE_IT(&htim5, TIM_IT_UPDATE);
-
-    HAL_TIMEx_HallSensor_Start(&htim5);
+//    __HAL_TIM_ENABLE_IT(&htim5, TIM_IT_UPDATE);
+//    __HAL_TIM_ENABLE_IT(&htim5, TIM_IT_CC1);
+//
+//    HAL_TIM_IC_Start_IT(&htim5, TIM_CHANNEL_1);
 }
 
 void hall_disable(void) {
@@ -269,38 +279,16 @@ void hall_disable(void) {
     HAL_TIMEx_HallSensor_Stop(&htim5);
 }
 
-uint8_t get_hall_state(void) {
-    uint8_t state = 0;
-
-#if 1
-    if (HAL_GPIO_ReadPin(HALL_INPUTU_GPIO_Port, HALL_INPUTU_Pin) != GPIO_PIN_RESET) {
-        state |= 0x01U << 0;
-    }
-
-    if (HAL_GPIO_ReadPin(HALL_INPUTV_GPIO_Port, HALL_INPUTV_Pin) != GPIO_PIN_RESET) {
-        state |= 0x01U << 1;
-    }
-
-    if (HAL_GPIO_ReadPin(HALL_INPUTW_GPIO_Port, HALL_INPUTW_Pin) != GPIO_PIN_RESET) {
-        state |= 0x01U << 2;
-    }
-#else
-    state = (GPIOH->IDR >> 10) & 7;
-#endif
-
-    return state;
-}
-
-
 u8 hall_read_temp;
 float hall_angle;
 float hall_angle_add;
 float hall_speed;
 int update = 0;
 
-void HAL_TIM_TriggerCallback(TIM_HandleTypeDef *htim) {
+void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim) {
     float temp;
-    temp = (float) (HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1));
+    uint32_t tempint = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1);
+    temp = (float) (tempint);
     hall_angle_add = (float) HALL_ANGLE_FACTOR / (float) (temp);
     hall_speed = (float) HALL_SPEED_FACTOR / (float) (temp);
     hall_read_temp = HAL_GPIO_ReadPin(HALL_INPUTU_GPIO_Port, HALL_INPUTU_Pin);
@@ -334,154 +322,6 @@ void HAL_TIM_TriggerCallback(TIM_HandleTypeDef *htim) {
 #endif
 }
 
-void OUTPUT_PWM(uint8_t step) {
-#if 0
-    if(get_bldcm_direction() == MOTOR_FWD)
-  {
-    step = 7 - step;
-  }
-#endif
-    if (get_bldcm_direction() == MOTOR_FWD) {
-        switch (step) {
-            case 1:    /* U+ W- */
-                __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_2, 0);                            // ?¨?? 2 ?????? 0
-                HAL_GPIO_WritePin(MOTOR_OCNPWM2_GPIO_Port, MOTOR_OCNPWM2_Pin, GPIO_PIN_RESET);    // ??±?????±?
-
-                __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, 0);                            // ?¨?? 3 ?????? 0
-                HAL_GPIO_WritePin(MOTOR_OCNPWM1_GPIO_Port, MOTOR_OCNPWM1_Pin, GPIO_PIN_RESET);    // ??±?????±?
-
-                __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_1, bldcm_pulse);
-                HAL_GPIO_WritePin(MOTOR_OCNPWM3_GPIO_Port, MOTOR_OCNPWM3_Pin, GPIO_PIN_SET);      // ????????±?
-                break;
-
-            case 2:     /* V+ U- */
-                __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, 0);                            // ?¨?? 3 ?????? 0
-                HAL_GPIO_WritePin(MOTOR_OCNPWM3_GPIO_Port, MOTOR_OCNPWM3_Pin, GPIO_PIN_RESET);    // ??±?????±?
-
-                __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_1, 0);                            // ?¨?? 1 ?????? 0
-                HAL_GPIO_WritePin(MOTOR_OCNPWM2_GPIO_Port, MOTOR_OCNPWM2_Pin, GPIO_PIN_RESET);    // ??±?????±?
-
-                __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_2, bldcm_pulse);                  // ?¨?? 2 ??????????±?
-                HAL_GPIO_WritePin(MOTOR_OCNPWM1_GPIO_Port, MOTOR_OCNPWM1_Pin, GPIO_PIN_SET);      // ????????±?
-
-                break;
-
-            case 3:    /* V+ W- */
-                __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_1, 0);                            // ?¨?? 1 ?????? 0
-                HAL_GPIO_WritePin(MOTOR_OCNPWM1_GPIO_Port, MOTOR_OCNPWM1_Pin, GPIO_PIN_RESET);    // ??±?????±?
-
-                __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, 0);                            // ?¨?? 3 ?????? 0
-                HAL_GPIO_WritePin(MOTOR_OCNPWM2_GPIO_Port, MOTOR_OCNPWM2_Pin, GPIO_PIN_RESET);    // ??±?????±?
-
-                __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_2, bldcm_pulse);                  // ?¨?? 2 ??????????±?
-                HAL_GPIO_WritePin(MOTOR_OCNPWM3_GPIO_Port, MOTOR_OCNPWM3_Pin, GPIO_PIN_SET);      // ????????±?
-                break;
-
-            case 4:     /* W+ V- */
-                __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_1, 0);                            // ?¨?? 1 ?????? 0
-                HAL_GPIO_WritePin(MOTOR_OCNPWM1_GPIO_Port, MOTOR_OCNPWM1_Pin, GPIO_PIN_RESET);    // ??±?????±?
-
-                __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_2, 0);                            // ?¨?? 2 ?????? 0
-                HAL_GPIO_WritePin(MOTOR_OCNPWM3_GPIO_Port, MOTOR_OCNPWM3_Pin, GPIO_PIN_RESET);    // ??±?????±?
-
-                __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, bldcm_pulse);                  // ?¨?? 3 ??????????±?
-                HAL_GPIO_WritePin(MOTOR_OCNPWM2_GPIO_Port, MOTOR_OCNPWM2_Pin, GPIO_PIN_SET);      // ????????±?
-                break;
-
-            case 5:     /* U+  V -*/
-                __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, 0);                            // ?¨?? 3 ?????? 0
-                HAL_GPIO_WritePin(MOTOR_OCNPWM3_GPIO_Port, MOTOR_OCNPWM3_Pin, GPIO_PIN_RESET);    // ??±?????±?
-
-                __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_2, 0);                            // ?¨?? 2 ?????? 0
-                HAL_GPIO_WritePin(MOTOR_OCNPWM1_GPIO_Port, MOTOR_OCNPWM1_Pin, GPIO_PIN_RESET);    // ??±?????±?
-
-                __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_1, bldcm_pulse);                  // ?¨?? 1 ??????????±?
-                HAL_GPIO_WritePin(MOTOR_OCNPWM2_GPIO_Port, MOTOR_OCNPWM2_Pin, GPIO_PIN_SET);      // ????????±?
-                break;
-
-            case 6:     /* W+ U- */
-                __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_2, 0);                            // ?¨?? 2 ?????? 0
-                HAL_GPIO_WritePin(MOTOR_OCNPWM2_GPIO_Port, MOTOR_OCNPWM2_Pin, GPIO_PIN_RESET);    // ??±?????±?
-
-                __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_1, 0);                            // ?¨?? 1 ?????? 0
-                HAL_GPIO_WritePin(MOTOR_OCNPWM3_GPIO_Port, MOTOR_OCNPWM3_Pin, GPIO_PIN_RESET);    // ??±?????±?
-
-                __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, bldcm_pulse);                  // ?¨?? 3 ??????????±?
-                HAL_GPIO_WritePin(MOTOR_OCNPWM1_GPIO_Port, MOTOR_OCNPWM1_Pin, GPIO_PIN_SET);      // ????????±?
-                break;
-        }
-    } else {
-        switch (step) {
-            case 1:   /* W+ U- */
-                __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_2, 0);                            // ?¨?? 2 ?????? 0
-                HAL_GPIO_WritePin(MOTOR_OCNPWM2_GPIO_Port, MOTOR_OCNPWM2_Pin, GPIO_PIN_RESET);    // ??±?????±?
-
-                __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_1, 0);                            // ?¨?? 1 ?????? 0
-                HAL_GPIO_WritePin(MOTOR_OCNPWM3_GPIO_Port, MOTOR_OCNPWM3_Pin, GPIO_PIN_RESET);    // ??±?????±?
-
-                __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, bldcm_pulse);                  // ?¨?? 3 ??????????±?
-                HAL_GPIO_WritePin(MOTOR_OCNPWM1_GPIO_Port, MOTOR_OCNPWM1_Pin, GPIO_PIN_SET);      // ????????±?
-                break;
-
-            case 2:    /* U+  V -*/
-                __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, 0);                            // ?¨?? 3 ?????? 0
-                HAL_GPIO_WritePin(MOTOR_OCNPWM3_GPIO_Port, MOTOR_OCNPWM3_Pin, GPIO_PIN_RESET);    // ??±?????±?
-
-                __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_2, 0);                            // ?¨?? 2 ?????? 0
-                HAL_GPIO_WritePin(MOTOR_OCNPWM1_GPIO_Port, MOTOR_OCNPWM1_Pin, GPIO_PIN_RESET);    // ??±?????±?
-
-                __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_1, bldcm_pulse);                  // ?¨?? 1 ??????????±?
-                HAL_GPIO_WritePin(MOTOR_OCNPWM2_GPIO_Port, MOTOR_OCNPWM2_Pin, GPIO_PIN_SET);      // ????????±?
-                break;
-
-            case 3:   /* W+ V- */
-                __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_1, 0);                            // ?¨?? 1 ?????? 0
-                HAL_GPIO_WritePin(MOTOR_OCNPWM1_GPIO_Port, MOTOR_OCNPWM1_Pin, GPIO_PIN_RESET);    // ??±?????±?
-
-                __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_2, 0);                            // ?¨?? 2 ?????? 0
-                HAL_GPIO_WritePin(MOTOR_OCNPWM3_GPIO_Port, MOTOR_OCNPWM3_Pin, GPIO_PIN_RESET);    // ??±?????±?
-
-                __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, bldcm_pulse);                  // ?¨?? 3 ??????????±?
-                HAL_GPIO_WritePin(MOTOR_OCNPWM2_GPIO_Port, MOTOR_OCNPWM2_Pin, GPIO_PIN_SET);      // ????????±?
-
-                break;
-
-            case 4:    /* V+ W- */
-                __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_1, 0);                            // ?¨?? 1 ?????? 0
-                HAL_GPIO_WritePin(MOTOR_OCNPWM1_GPIO_Port, MOTOR_OCNPWM1_Pin, GPIO_PIN_RESET);    // ??±?????±?
-
-                __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, 0);                            // ?¨?? 3 ?????? 0
-                HAL_GPIO_WritePin(MOTOR_OCNPWM2_GPIO_Port, MOTOR_OCNPWM2_Pin, GPIO_PIN_RESET);    // ??±?????±?
-
-                __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_2, bldcm_pulse);                  // ?¨?? 2 ??????????±?
-                HAL_GPIO_WritePin(MOTOR_OCNPWM3_GPIO_Port, MOTOR_OCNPWM3_Pin, GPIO_PIN_SET);      // ????????±?
-                break;
-
-            case 5:    /* V+ U- */
-                __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, 0);                            // ?¨?? 3 ?????? 0
-                HAL_GPIO_WritePin(MOTOR_OCNPWM3_GPIO_Port, MOTOR_OCNPWM3_Pin, GPIO_PIN_RESET);    // ??±?????±?
-
-                __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_1, 0);                            // ?¨?? 1 ?????? 0
-                HAL_GPIO_WritePin(MOTOR_OCNPWM2_GPIO_Port, MOTOR_OCNPWM2_Pin, GPIO_PIN_RESET);    // ??±?????±?
-
-                __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_2, bldcm_pulse);                  // ?¨?? 2 ??????????±?
-                HAL_GPIO_WritePin(MOTOR_OCNPWM1_GPIO_Port, MOTOR_OCNPWM1_Pin, GPIO_PIN_SET);      // ????????±?
-                break;
-
-            case 6:    /* U+ W- */
-                __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_2, 0);                            // ?¨?? 2 ?????? 0
-                HAL_GPIO_WritePin(MOTOR_OCNPWM2_GPIO_Port, MOTOR_OCNPWM2_Pin, GPIO_PIN_RESET);    // ??±?????±?
-
-                __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, 0);                            // ?¨?? 3 ?????? 0
-                HAL_GPIO_WritePin(MOTOR_OCNPWM1_GPIO_Port, MOTOR_OCNPWM1_Pin, GPIO_PIN_RESET);    // ??±?????±?
-
-                __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_1, bldcm_pulse);                  // ?¨?? 1 ??????????±?
-                HAL_GPIO_WritePin(MOTOR_OCNPWM3_GPIO_Port, MOTOR_OCNPWM3_Pin, GPIO_PIN_SET);      // ????????±?
-                break;
-        }
-    }
-    HAL_TIM_GenerateEvent(&htim8, TIM_EVENTSOURCE_COM);
-}
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 

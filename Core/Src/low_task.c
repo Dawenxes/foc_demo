@@ -32,7 +32,7 @@ void low_control_task(void) {
         motor_start();
         foc_state = MOTOR_RUNNING;
     } else {
-        motor_stop();
+        //motor_stop();
         foc_state = MOTOR_STOP;
     }
 

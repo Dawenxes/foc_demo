@@ -118,7 +118,7 @@ void adc_dma_init(void) {
 }
 
 /**
-  * @brief  ADC 模式配置
+  * @brief  ADC 模式配置,时钟84M, ADC时钟为84M/4=21M, 3+12=15个周期=0.7142us
   * @param  无
   * @retval 无
   */
@@ -359,11 +359,7 @@ int32_t get_curr_val_v(void) {
         adc_offset = curr_adc_mean;    // 多次记录偏置电压，待系统稳定偏置电压才为有效值
         flag += 1;
     }
-    if (curr_adc_mean >= adc_offset) {
         curr_adc_mean -= adc_offset;                     // 减去偏置电压
-    } else {
-        curr_adc_mean = 0;
-    }
 
     float vdc = GET_ADC_VDC_VAL(curr_adc_mean);      // 获取电压值
 
@@ -393,11 +389,7 @@ int32_t get_curr_val_u(void) {
             foc_state = MOTOR_RUN;
         }
     }
-    if (curr_adc_mean >= adc_offset) {
-        curr_adc_mean -= adc_offset;                     // 减去偏置电压
-    } else {
-        curr_adc_mean = 0;
-    }
+    curr_adc_mean -= adc_offset;                     // 减去偏置电压
 
     float vdc = GET_ADC_VDC_VAL(curr_adc_mean);      // 获取电压值
 
@@ -424,11 +416,7 @@ int32_t get_curr_val_w(void) {
         adc_offset = curr_adc_mean;    // 多次记录偏置电压，待系统稳定偏置电压才为有效值
         flag += 1;
     }
-    if (curr_adc_mean >= adc_offset) {
         curr_adc_mean -= adc_offset;                     // 减去偏置电压
-    } else {
-        curr_adc_mean = 0;
-    }
 
     float vdc = GET_ADC_VDC_VAL(curr_adc_mean);      // 获取电压值
 
