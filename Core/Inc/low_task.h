@@ -14,6 +14,7 @@ extern enum FOC_STATE {
 };
 extern enum FOC_STATE foc_state;
 
+void motor_start(void);
 void low_control_task(void);
 
 #endif //FOC_DEMO_LOWS_TASK_H

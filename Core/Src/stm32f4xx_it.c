@@ -57,6 +57,7 @@
 /* External variables --------------------------------------------------------*/
 extern TIM_HandleTypeDef htim5;
 extern UART_HandleTypeDef huart1;
+extern ADC_HandleTypeDef adc3;
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */
@@ -226,7 +227,7 @@ void ADC_DMA_IRQ_Handler(void)
 }
 void ADC_VBUS_IRQHandler(void)
 {
-    HAL_ADC_IRQHandler(&ADC_Handle);
+    HAL_ADC_IRQHandler(&adc3);
 }
 
 /**
@@ -261,12 +262,6 @@ void SysTick_Handler(void)
     HAL_IncTick();
     /* USER CODE BEGIN SysTick_IRQn 1 */
     Speed_Pid_Calc(Speed_Ref,Speed_Fdk,&Speed_Pid_Out,&Speed_Pid);
-    hz_100_cnt++;
-    if(hz_100_cnt==10)
-    {
-        low_control_task();
-        hz_100_cnt=0;
-    }
     /* USER CODE END SysTick_IRQn 1 */
 }
 /* USER CODE END 1 */

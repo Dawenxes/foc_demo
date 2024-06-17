@@ -26,7 +26,6 @@ static uint16_t bldcm_pulse = 0;
 
 TIM_HandleTypeDef htim5;
 TIM_HandleTypeDef htim8;
-
 /* TIM5 init function */
 void MX_TIM5_Init(void) {
 
@@ -116,6 +115,9 @@ void MX_TIM8_Init(void) {
     if (HAL_TIM_PWM_ConfigChannel(&htim8, &sConfigOC, TIM_CHANNEL_3) != HAL_OK) {
         Error_Handler();
     }
+    if (HAL_TIM_PWM_ConfigChannel(&htim8, &sConfigOC, TIM_CHANNEL_4) != HAL_OK) {
+        Error_Handler();
+    }
     sBreakDeadTimeConfig.OffStateRunMode = TIM_OSSR_ENABLE;
     sBreakDeadTimeConfig.OffStateIDLEMode = TIM_OSSI_ENABLE;
     sBreakDeadTimeConfig.LockLevel = TIM_LOCKLEVEL_1;
@@ -127,7 +129,6 @@ void MX_TIM8_Init(void) {
         Error_Handler();
     }
     /* USER CODE BEGIN TIM8_Init 2 */
-
     /* USER CODE END TIM8_Init 2 */
     HAL_TIM_MspPostInit(&htim8);
 
@@ -157,7 +158,7 @@ void HAL_TIM_IC_MspInit(TIM_HandleTypeDef *timex_hallsensorHandle) {
         HAL_GPIO_Init(GPIOH, &GPIO_InitStruct);
 
         /* TIM5 interrupt Init */
-        HAL_NVIC_SetPriority(TIM5_IRQn, 0, 1);
+        HAL_NVIC_SetPriority(TIM5_IRQn, 2, 0);
         HAL_NVIC_EnableIRQ(TIM5_IRQn);
         /* USER CODE BEGIN TIM5_MspInit 1 */
 
@@ -188,6 +189,8 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef *timHandle) {
         /* USER CODE END TIM8_MspPostInit 0 */
 
         __HAL_RCC_GPIOI_CLK_ENABLE();
+
+        __HAL_RCC_GPIOH_CLK_ENABLE();
         /**TIM8 GPIO Configuration
         PI5     ------> TIM8_CH1
         PI6     ------> TIM8_CH2
@@ -200,12 +203,31 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef *timHandle) {
         GPIO_InitStruct.Alternate = GPIO_AF3_TIM8;
         HAL_GPIO_Init(GPIOI, &GPIO_InitStruct);
 
+        GPIO_InitStruct.Pin = MOTOR_OCNPWM1_Pin | MOTOR_OCNPWM2_Pin | MOTOR_OCNPWM3_Pin;
+        GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+        GPIO_InitStruct.Pull = GPIO_NOPULL;
+        GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+        GPIO_InitStruct.Alternate = GPIO_AF3_TIM8;
+        HAL_GPIO_Init(GPIOH, &GPIO_InitStruct);
+
+        GPIO_InitStruct.Pin = GPIO_PIN_2;
+        GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+        GPIO_InitStruct.Pull = GPIO_NOPULL;
+        GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+        GPIO_InitStruct.Alternate = GPIO_AF3_TIM8;
+        HAL_GPIO_Init(GPIOI, &GPIO_InitStruct);
+        HAL_GPIO_Init(GPIOI, &GPIO_InitStruct);
         /* USER CODE BEGIN TIM8_MspPostInit 1 */
         HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_1);
+        HAL_TIMEx_PWMN_Start(&htim8, TIM_CHANNEL_1);
 
         HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_2);
+        HAL_TIMEx_PWMN_Start(&htim8, TIM_CHANNEL_2);
 
         HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_3);
+        HAL_TIMEx_PWMN_Start(&htim8, TIM_CHANNEL_3);
+        HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_4);
+
         /* USER CODE END TIM8_MspPostInit 1 */
     }
 
@@ -251,15 +273,9 @@ void HAL_TIM_PWM_MspDeInit(TIM_HandleTypeDef *tim_pwmHandle) {
 
 /* USER CODE BEGIN 1 */
 void stop_pwm_output(void) {
-    __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_1, 0);
-
-    __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_2, 0);
-
-    __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, 0);
-
-    HAL_GPIO_WritePin(MOTOR_OCNPWM1_GPIO_Port, MOTOR_OCNPWM1_Pin, GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(MOTOR_OCNPWM2_GPIO_Port, MOTOR_OCNPWM2_Pin, GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(MOTOR_OCNPWM3_GPIO_Port, MOTOR_OCNPWM3_Pin, GPIO_PIN_RESET);
+    __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_1, PWM_TIM_PULSE >> 1);
+    __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_2, PWM_TIM_PULSE >> 1);
+    __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, PWM_TIM_PULSE >> 1);
 }
 
 void set_pwm_pulse(uint16_t pulse) {
@@ -267,10 +283,8 @@ void set_pwm_pulse(uint16_t pulse) {
 }
 
 void hall_enable(void) {
-//    __HAL_TIM_ENABLE_IT(&htim5, TIM_IT_UPDATE);
-//    __HAL_TIM_ENABLE_IT(&htim5, TIM_IT_CC1);
-//
-//    HAL_TIM_IC_Start_IT(&htim5, TIM_CHANNEL_1);
+
+
 }
 
 void hall_disable(void) {

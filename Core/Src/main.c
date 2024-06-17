@@ -84,11 +84,14 @@ int main(void) {
 
     /* Initialize all configured peripherals */
     MX_GPIO_Init();
-    //MX_USART1_UART_Init();
-    /* USER CODE BEGIN 2 */
-    //ADC_Init();
+    MX_USART1_UART_Init();
     printf("野火直流无刷电机按键控制例程\r\n");
+
+    /* USER CODE BEGIN 2 */
     bldcm_init();
+
+    ADC_Init();
+
     /* USER CODE END 2 */
 
     /* Infinite loop */

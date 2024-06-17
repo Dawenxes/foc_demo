@@ -11,8 +11,8 @@
 #define ADC_VBUS_IRQHandler             ADC_IRQHandler
 
 #define VREF                            3.3f     // 参考电压，理论上是3.3
-#define ADC_NUM_MAX                     320    // ADC 转换结果缓冲区最大值
-#define ADC_NUM_MAX_COUNT                     320/5    // ADC 转换结果缓冲区最大值
+#define ADC_NUM_MAX                     64    // ADC 转换结果缓冲区最大值
+#define ADC_NUM_MAX_COUNT                     64    // ADC 转换结果缓冲区最大值
 
 #define GET_ADC_VDC_VAL(val)            ((float)val/4096.0f*VREF)          // 得到电压值
 
@@ -62,7 +62,7 @@
 #define GET_VBUS_VAL(val)               (((float)val - 1.24f) * 37.0f )      // 获取电压值（测量电压是电源电压的1/37）
 
 extern DMA_HandleTypeDef DMA_Init_Handle;
-extern ADC_HandleTypeDef ADC_Handle;
+extern ADC_HandleTypeDef adc3;
 extern float theta;
 extern float angle;
 extern float Iq_ref;
