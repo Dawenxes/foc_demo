@@ -289,53 +289,53 @@ void foc_algorithm_step(void)
   Clarke_Transf(Current_Iabc,&Current_Ialpha_beta);        //CLARK 变换
   Angle_To_Cos_Sin(FOC_Input.theta,&Transf_Cos_Sin);     //由角度计算 park变换和 反park变换的 COS SIN值
   Park_Transf(Current_Ialpha_beta,Transf_Cos_Sin,&Current_Idq);  //Park变换，由Ialpha Ibeta 与角度信息，去计算Id Iq  // 由交流信息转化为直流信息，方便PID控制 
-  Current_PID_Calc(FOC_Input.Id_ref,Current_Idq.Id,&Voltage_DQ.Vd,&Current_D_PID);     //D轴电流环PID  根据电流参考与电流反馈去计算 输出电压
-  Current_PID_Calc(FOC_Input.Iq_ref,Current_Idq.Iq,&Voltage_DQ.Vq,&Current_Q_PID);     //Q轴电流环PID  根据电流参考与电流反馈去计算 输出电压
+  //Current_PID_Calc(FOC_Input.Id_ref,Current_Idq.Id,&Voltage_DQ.Vd,&Current_D_PID);     //D轴电流环PID  根据电流参考与电流反馈去计算 输出电压
+  //Current_PID_Calc(FOC_Input.Iq_ref,Current_Idq.Iq,&Voltage_DQ.Vq,&Current_Q_PID);     //Q轴电流环PID  根据电流参考与电流反馈去计算 输出电压
   Rev_Park_Transf(Voltage_DQ,Transf_Cos_Sin,&Voltage_Alpha_Beta);                //反park变换  通过电流环得到的dq轴电压信息结合角度信息，去把直流信息转化为交流信息用于SVPWM的输入
 
-  FOC_Interface_states.EKF_Interface[0] = Voltage_Alpha_Beta.Valpha;   //扩展卡尔曼估计转子位置与速度需要的输入信息
-  FOC_Interface_states.EKF_Interface[1] = Voltage_Alpha_Beta.Vbeta;    //状态观测器输入
-  FOC_Interface_states.EKF_Interface[2] = Current_Ialpha_beta.Ialpha;
-  FOC_Interface_states.EKF_Interface[3] = Current_Ialpha_beta.Ibeta;
-  FOC_Interface_states.EKF_Interface[4] = FOC_Input.Rs;
-  FOC_Interface_states.EKF_Interface[5] = FOC_Input.Ls;
-  FOC_Interface_states.EKF_Interface[6] = FOC_Input.flux;
-  
-
-  stm32_ekf_Outputs_wrapper(&FOC_Interface_states.EKF_Interface[0], &FOC_Output.EKF[0],  //扩展卡尔曼估计转子位置与速度的输出函数
-                            &FOC_Interface_states.EKF_States[0]);
-
-  FOC_Interface_states.R_flux_Ident_Interface[0] = Current_Idq.Iq;         //电机电阻与磁链参数识别算法的输入
-  FOC_Interface_states.R_flux_Ident_Interface[1] = FOC_Input.speed_fdk;
-  FOC_Interface_states.R_flux_Ident_Interface[2] = Voltage_DQ.Vq;
-
-  FOC_Interface_states.L_Ident_Interface[0] = -(Current_Idq.Iq * FOC_Input.speed_fdk);//电机电感参数识别算法的输入
-  FOC_Interface_states.L_Ident_Interface[1] = Voltage_DQ.Vd;
-  
-
-  L_identification_Outputs_wrapper(&FOC_Interface_states.L_Ident_Interface[0],  //电机电感参数识别算法的输出
-                                   &FOC_Interface_states.L_Ident_Output, &FOC_Interface_states.L_Ident_States);
-  
-
-  R_flux_identification_Outputs_wrapper(&FOC_Interface_states.R_flux_Ident_Interface[0],//电机电阻与磁链参数识别算法的输出
-                                        &FOC_Interface_states.R_flux_Ident_Output[0], &FOC_Interface_states.R_flux_Ident_States);
-  
+//  FOC_Interface_states.EKF_Interface[0] = Voltage_Alpha_Beta.Valpha;   //扩展卡尔曼估计转子位置与速度需要的输入信息
+//  FOC_Interface_states.EKF_Interface[1] = Voltage_Alpha_Beta.Vbeta;    //状态观测器输入
+//  FOC_Interface_states.EKF_Interface[2] = Current_Ialpha_beta.Ialpha;
+//  FOC_Interface_states.EKF_Interface[3] = Current_Ialpha_beta.Ibeta;
+//  FOC_Interface_states.EKF_Interface[4] = FOC_Input.Rs;
+//  FOC_Interface_states.EKF_Interface[5] = FOC_Input.Ls;
+//  FOC_Interface_states.EKF_Interface[6] = FOC_Input.flux;
+//
+//
+//  stm32_ekf_Outputs_wrapper(&FOC_Interface_states.EKF_Interface[0], &FOC_Output.EKF[0],  //扩展卡尔曼估计转子位置与速度的输出函数
+//                            &FOC_Interface_states.EKF_States[0]);
+//
+//  FOC_Interface_states.R_flux_Ident_Interface[0] = Current_Idq.Iq;         //电机电阻与磁链参数识别算法的输入
+//  FOC_Interface_states.R_flux_Ident_Interface[1] = FOC_Input.speed_fdk;
+//  FOC_Interface_states.R_flux_Ident_Interface[2] = Voltage_DQ.Vq;
+//
+//  FOC_Interface_states.L_Ident_Interface[0] = -(Current_Idq.Iq * FOC_Input.speed_fdk);//电机电感参数识别算法的输入
+//  FOC_Interface_states.L_Ident_Interface[1] = Voltage_DQ.Vd;
+//
+//
+//  L_identification_Outputs_wrapper(&FOC_Interface_states.L_Ident_Interface[0],  //电机电感参数识别算法的输出
+//                                   &FOC_Interface_states.L_Ident_Output, &FOC_Interface_states.L_Ident_States);
+//
+//
+//  R_flux_identification_Outputs_wrapper(&FOC_Interface_states.R_flux_Ident_Interface[0],//电机电阻与磁链参数识别算法的输出
+//                                        &FOC_Interface_states.R_flux_Ident_Output[0], &FOC_Interface_states.R_flux_Ident_States);
+//
   
 
   SVPWM_Calc(Voltage_Alpha_Beta,FOC_Input.Udc,FOC_Input.Tpwm);       //SVPWM 计算模块
  
 
-  stm32_ekf_Update_wrapper(&FOC_Interface_states.EKF_Interface[0], &FOC_Output.EKF[0],   //扩展卡尔曼滤波算法的计算
-                           &FOC_Interface_states.EKF_States[0]);                         //也就是无感状态观测器的计算
-  
-
-  L_identification_Update_wrapper(&FOC_Interface_states.L_Ident_Interface[0],//电机电感参数识别算法的计算
-                                  &FOC_Interface_states.L_Ident_Output, &FOC_Interface_states.L_Ident_States);
-  
- 
-  R_flux_identification_Update_wrapper(&FOC_Interface_states.R_flux_Ident_Interface[0],//电机电阻与磁链参数识别算法的计算
-                                       &FOC_Interface_states.R_flux_Ident_Output[0], &FOC_Interface_states.R_flux_Ident_States);
-  
+//  stm32_ekf_Update_wrapper(&FOC_Interface_states.EKF_Interface[0], &FOC_Output.EKF[0],   //扩展卡尔曼滤波算法的计算
+//                           &FOC_Interface_states.EKF_States[0]);                         //也就是无感状态观测器的计算
+//
+//
+//  L_identification_Update_wrapper(&FOC_Interface_states.L_Ident_Interface[0],//电机电感参数识别算法的计算
+//                                  &FOC_Interface_states.L_Ident_Output, &FOC_Interface_states.L_Ident_States);
+//
+//
+//  R_flux_identification_Update_wrapper(&FOC_Interface_states.R_flux_Ident_Interface[0],//电机电阻与磁链参数识别算法的计算
+//                                       &FOC_Interface_states.R_flux_Ident_Output[0], &FOC_Interface_states.R_flux_Ident_States);
+//
 
   FOC_Output.L_RF[0] = FOC_Interface_states.L_Ident_Output;
   FOC_Output.L_RF[1] = FOC_Interface_states.R_flux_Ident_Output[0];

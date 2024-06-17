@@ -402,22 +402,21 @@ void motor_run(void) {
 
 #ifdef  HALL_FOC_SELECT
 
-    if ((hall_speed * 2.0f * PI) > SPEED_LOOP_CLOSE_RAD_S) {
-        FOC_Input.Id_ref = 0.0f;
-        Speed_Fdk = hall_speed * 2.0f * PI;
-        FOC_Input.Iq_ref = Speed_Pid_Out;
-    } else {
-        FOC_Input.Id_ref = 0.0f;
-        FOC_Input.Iq_ref = Iq_ref;
-        Speed_Pid.I_Sum = Iq_ref;
-    }
-//    theta += 0.03;
-//    if (theta > 2.0f * PI) {
-//        theta -= (2.0f * PI);
+//    if ((hall_speed * 2.0f * PI) > SPEED_LOOP_CLOSE_RAD_S) {
+//        FOC_Input.Id_ref = 0.0f;
+//        Speed_Fdk = hall_speed * 2.0f * PI;
+//        FOC_Input.Iq_ref = Speed_Pid_Out;
+//    } else {
+//        FOC_Input.Id_ref = 0.0f;
+//        FOC_Input.Iq_ref = Iq_ref;
+//        Speed_Pid.I_Sum = Iq_ref;
 //    }
+//
+//
+//    FOC_Input.theta = hall_angle;
+//    FOC_Input.speed_fdk = hall_speed * 2.0f * PI;
 
-    FOC_Input.theta = hall_angle;
-    FOC_Input.speed_fdk = hall_speed * 2.0f * PI;
+
 
 #endif
 
@@ -439,18 +438,27 @@ void motor_run(void) {
 
 #endif
 
-
-    EKF_Hz = FOC_Output.EKF[2] / (2.0f * PI);
-    FOC_Input.Id_ref = 0.0f;
-    FOC_Input.Tpwm = PWM_TIM_PULSE_TPWM;         //FOC
+    theta += 0.01;
+    if (theta > 2.0f * PI) {
+        theta -= (2.0f * PI);
+    }
+    FOC_Input.theta = theta;
+    FOC_Input.Tpwm = PWM_TIM_PULSE_TPWM;
     FOC_Input.Udc = Vbus;
-    FOC_Input.Rs = Rs;
-    FOC_Input.Ls = Ls;
-    FOC_Input.flux = flux;
+    Voltage_DQ.Vd = 0.0f;
+    Voltage_DQ.Vq = 2.0f;
 
-    FOC_Input.ia = Ia;
-    FOC_Input.ib = Ib;
-    FOC_Input.ic = Ic;
+//    EKF_Hz = FOC_Output.EKF[2] / (2.0f * PI);
+//    FOC_Input.Id_ref = 0.0f;
+//    FOC_Input.Tpwm = PWM_TIM_PULSE_TPWM;         //FOC
+//    FOC_Input.Udc = Vbus;
+//    FOC_Input.Rs = Rs;
+//    FOC_Input.Ls = Ls;
+//    FOC_Input.flux = flux;
+//
+//    FOC_Input.ia = Ia;
+//    FOC_Input.ib = Ib;
+//    FOC_Input.ic = Ic;
     foc_algorithm_step();
 
     if (foc_state == MOTOR_RUN || foc_state == MOTOR_RUNNING) {
@@ -458,8 +466,8 @@ void motor_run(void) {
         __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_2, (u16) (FOC_Output.Tcmp2));
         __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (u16) (FOC_Output.Tcmp3));
         //HAL_TIM_GenerateEvent(&htim8, TIM_EVENTSOURCE_COM);
-        printf("电源电压=%fV,U相电流=%dmA,V相电流=%dmA,W相电流=%dmA\r\n",
-               Vbus, Ia, Ib, Ic);
+//        printf("电源电压=%fV,U相电流=%dmA,V相电流=%dmA,W相电流=%dmA\r\n",
+//               Vbus, Ia, Ib, Ic);
     } else {
         __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_1, PWM_TIM_PULSE >> 1);
         __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_2, PWM_TIM_PULSE >> 1);

@@ -121,6 +121,7 @@ extern FOC_INTERFACE_STATES_DEF FOC_Interface_states;
 
 
 extern FOC_INPUT_DEF FOC_Input;
+extern VOLTAGE_DQ_DEF Voltage_DQ;
 
 
 extern FOC_OUTPUT_DEF FOC_Output;
