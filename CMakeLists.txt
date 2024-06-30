@@ -20,6 +20,7 @@ endif()
 
 # Set the project name
 set(CMAKE_PROJECT_NAME foc_demo)
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -u _printf_float")
 
 # Include toolchain file
 include("cmake/gcc-arm-none-eabi.cmake")

@@ -57,34 +57,8 @@ static void sd_gpio_config(void) {
     HAL_GPIO_Init(SHUTDOWN_GPIO_PORT, &GPIO_InitStruct);
 }
 
-/**
-  * @brief  设置电机速度
-  * @param  v: 速度（占空比）
-  * @retval 无
-  */
-void set_bldcm_speed(uint16_t v) {
-    bldcm_data.dutyfactor = v;
 
-    set_pwm_pulse(v);     // 设置速度
-}
 
-/**
-  * @brief  设置电机方向
-  * @param  无
-  * @retval 无
-  */
-void set_bldcm_direction(motor_dir_t dir) {
-    bldcm_data.direction = dir;
-}
-
-/**
-  * @brief  获取电机当前方向
-  * @param  无
-  * @retval 无
-  */
-motor_dir_t get_bldcm_direction(void) {
-    return bldcm_data.direction;
-}
 
 /**
   * @brief  使能电机
@@ -96,6 +70,8 @@ void set_bldcm_enable(void) {
     HAL_Delay(1);
     hall_enable();
 }
+
+
 
 /**
   * @brief  禁用电机

@@ -20,26 +20,21 @@
 
 DMA_HandleTypeDef DMA_Init_Handle;
 ADC_HandleTypeDef adc3;
+enum FOC_STATE foc_state = MOTOR_STOP;
 
 static int16_t adc_buff[ADC_NUM_MAX];    // 电压采集缓冲区
-static int16_t adc_vbus = 0;        // 电源电压 ACD 采样结果平均值
 static uint32_t adc_mean_t = 0;        // 平均值累加
-static uint32_t adc_u = 0;        // 平均值累加
-static uint32_t adc_v = 0;        // 平均值累加
-static uint32_t adc_w = 0;        // 平均值累加
 
 static uint32_t adc_offset_u = 0;        // 偏执电压
 static uint32_t adc_offset_v = 0;        // 偏执电压
 static uint32_t adc_offset_w = 0;        // 偏执电压
-static uint32_t adc_offset_vbus = 0;        // 偏执电压
+static SeqQueue adc_u_queue;
+static SeqQueue adc_w_queue;
+static SeqQueue adc_v_queue;
+static SeqQueue adc_vbus_queue;
 
 
-
-int32_t ia_test, ib_test, ic_test;
-//float err;
-
-
-double Ia, Ib, Ic;
+float Ia, Ib, Ic;
 float Vbus;
 uint16_t i = 0;
 u8 speed_close_loop_flag;
@@ -121,7 +116,7 @@ void ADC_GPIO_Config(void) {
 //}
 
 /**
-  * @brief  ADC 模式配置,时钟84M, ADC时钟为84M/4=21M, 3+12=15个周期=0.1
+  * @brief  ADC 模式配置,时钟84M, ADC时钟为84M/4=21M, 3+12=15个周期=
   * @param  无
   * @retval 无
   */
@@ -210,6 +205,11 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef *adcHandle) {
   * @retval 无
   */
 void ADC_Init(void) {
+    InitQueue(&adc_u_queue);
+    InitQueue(&adc_w_queue);
+    InitQueue(&adc_v_queue);
+    InitQueue(&adc_vbus_queue);
+
     ADC_GPIO_Config();
     ADC_Mode_Config();
 }
@@ -223,18 +223,13 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
   * @retval 无
   */
 void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef *hadc) {
-    int32_t adc_mean = 0;
     static uint16_t flag = 0;
 
     /* 计算电流通道采样的平均值 */
-    adc_u = HAL_ADCEx_InjectedGetValue(hadc, ADC_INJECTED_RANK_1);    // 累加电压
-
-    adc_v = HAL_ADCEx_InjectedGetValue(hadc, ADC_INJECTED_RANK_2);    // 累加电压
-
-    adc_w = HAL_ADCEx_InjectedGetValue(hadc, ADC_INJECTED_RANK_3);    // 累加电压
-
-    adc_vbus = HAL_ADCEx_InjectedGetValue(hadc, ADC_INJECTED_RANK_4);    // 累加电压
-
+    EnQueue(&adc_u_queue, HAL_ADCEx_InjectedGetValue(hadc, ADC_INJECTED_RANK_1));
+    EnQueue(&adc_v_queue, HAL_ADCEx_InjectedGetValue(hadc, ADC_INJECTED_RANK_2));
+    EnQueue(&adc_w_queue, HAL_ADCEx_InjectedGetValue(hadc, ADC_INJECTED_RANK_3));
+    EnQueue(&adc_vbus_queue, HAL_ADCEx_InjectedGetValue(hadc, ADC_INJECTED_RANK_4));
 
     /* 计算温度通道采样的平均值 */
 //    for (uint32_t count = 4; count < ADC_NUM_MAX; count += 5) {
@@ -243,29 +238,19 @@ void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef *hadc) {
 //    adc_mean_t = adc_mean / (ADC_NUM_MAX_COUNT);    // 保存平均值
 //    adc_mean = 0;
 
-    if (foc_state == MOTOR_RUN || foc_state == MOTOR_RUNNING) {
-        hall_angle += hall_angle_add;
-        if (hall_angle < 0.0f) {
-            hall_angle += 2.0f * PI;
-        } else if (hall_angle > (2.0f * PI)) {
-            hall_angle -= 2.0f * PI;
-        }
-        if (foc_state == MOTOR_RUN) {
-            motor_start();
-            foc_state = MOTOR_RUNNING;
-        }
+    if (foc_state == MOTOR_RUN) {
+        motor_start();
+        foc_state = MOTOR_RUNNING;
+    } else if (foc_state == MOTOR_RUNNING) {
         motor_run();
     } else {
         if (foc_state == MOTOR_GET_OFFSET && flag < 128) {
-            adc_offset_u += adc_u;
-            adc_offset_v += adc_v;
-            adc_offset_w += adc_w;
             flag++;
         } else if (foc_state == MOTOR_GET_OFFSET && flag >= 128) {
+            adc_offset_u = mean(&adc_u_queue);
+            adc_offset_v = mean(&adc_v_queue);
+            adc_offset_w = mean(&adc_w_queue);
             foc_state = MOTOR_RUN;
-            adc_offset_u >>= 7;
-            adc_offset_v >>= 7;
-            adc_offset_w >>= 7;
         }
     }
 }
@@ -289,9 +274,7 @@ float get_ntc_v_val(void) {
 float get_ntc_r_val(void) {
     float r = 0;
     float vdc = get_ntc_v_val();
-
     r = (VREF - vdc) / (vdc / (float) 4700.0);
-
     return r;
 }
 
@@ -322,9 +305,9 @@ float get_ntc_t_val(void) {
   * @retval 转换得到的电流值
   */
 int32_t get_curr_val_v(void) {
-    int16_t curr_adc_mean = 0;         // 电流 ACD 采样结果平均值
+    int32_t curr_adc_mean = 0;         // 电流 ACD 采样结果平均值
 
-    curr_adc_mean = adc_v;    // 保存平均值
+    curr_adc_mean = mean(&adc_v_queue);    // 保存平均值
 
     curr_adc_mean -= adc_offset_v;                     // 减去偏置电压
 
@@ -339,9 +322,9 @@ int32_t get_curr_val_v(void) {
   * @retval 转换得到的电流值
   */
 int32_t get_curr_val_u(void) {
-    int16_t curr_adc_mean = 0;         // 电流 ACD 采样结果平均值
+    int32_t curr_adc_mean = 0;         // 电流 ACD 采样结果平均值
 
-    curr_adc_mean = adc_u;    // 保存平均值
+    curr_adc_mean = mean(&adc_u_queue);    // 保存平均值
 
     curr_adc_mean -= adc_offset_u;                     // 减去偏置电压
 
@@ -356,9 +339,9 @@ int32_t get_curr_val_u(void) {
   * @retval 转换得到的电流值
   */
 int32_t get_curr_val_w(void) {
-    int16_t curr_adc_mean = 0;         // 电流 ACD 采样结果平均值
+    int32_t curr_adc_mean = 0;         // 电流 ACD 采样结果平均值
 
-    curr_adc_mean = adc_w;
+    curr_adc_mean = mean(&adc_w_queue);
 
     curr_adc_mean -= adc_offset_w;                     // 减去偏置电压
 
@@ -373,16 +356,22 @@ int32_t get_curr_val_w(void) {
   * @retval 转换得到的电压值
   */
 float get_vbus_val(void) {
-    float vdc = GET_ADC_VDC_VAL(adc_vbus);      // 获取电压值
+    float vdc = GET_ADC_VDC_VAL(mean(&adc_vbus_queue));      // 获取电压值
     return GET_VBUS_VAL(vdc);
 }
 
 
 void motor_run(void) {
+    hall_angle += hall_angle_add;
+    if (hall_angle < 0.0f) {
+        hall_angle += 2.0f * PI;
+    } else if (hall_angle > (2.0f * PI)) {
+        hall_angle -= 2.0f * PI;
+    }
     Vbus = get_vbus_val();
     Ia = get_curr_val_u();
     Ib = get_curr_val_v();
-    Ic = get_curr_val_w();
+    Ic = -Ia - Ib;
 
     if (speed_close_loop_flag == 0) {
         if ((Iq_ref < MOTOR_STARTUP_CURRENT)) {
@@ -401,79 +390,51 @@ void motor_run(void) {
     }
 
 #ifdef  HALL_FOC_SELECT
-
-//    if ((hall_speed * 2.0f * PI) > SPEED_LOOP_CLOSE_RAD_S) {
-//        FOC_Input.Id_ref = 0.0f;
-//        Speed_Fdk = hall_speed * 2.0f * PI;
-//        FOC_Input.Iq_ref = Speed_Pid_Out;
-//    } else {
-//        FOC_Input.Id_ref = 0.0f;
-//        FOC_Input.Iq_ref = Iq_ref;
-//        Speed_Pid.I_Sum = Iq_ref;
-//    }
-//
-//
-//    FOC_Input.theta = hall_angle;
-//    FOC_Input.speed_fdk = hall_speed * 2.0f * PI;
-
-
-
-#endif
-
-#ifdef  SENSORLESS_FOC_SELECT
-    if(FOC_Output.EKF[2]>SPEED_LOOP_CLOSE_RAD_S)
-  {
-    FOC_Input.Id_ref = 0.0f;
-    Speed_Fdk = FOC_Output.EKF[2];
-    FOC_Input.Iq_ref = Speed_Pid_Out;
-  }
-  else
-  {
-    FOC_Input.Id_ref = 0.0f;
-    FOC_Input.Iq_ref = Iq_ref;
-    Speed_Pid.I_Sum = Iq_ref;
-  }
-  FOC_Input.theta = FOC_Output.EKF[3];
-  FOC_Input.speed_fdk = FOC_Output.EKF[2];
-
-#endif
-
-    theta += 0.01;
-    if (theta > 2.0f * PI) {
-        theta -= (2.0f * PI);
+    if ((hall_speed * 2.0f * PI) > SPEED_LOOP_CLOSE_RAD_S) {
+        FOC_Input.Id_ref = 0.0f;
+        Speed_Fdk = hall_speed * 2.0f * PI;
+        FOC_Input.Iq_ref = Speed_Pid_Out;
+    } else {
+        FOC_Input.Id_ref = 0.0f;
+        FOC_Input.Iq_ref = Iq_ref;
+        Speed_Pid.I_Sum = Iq_ref;
     }
-    FOC_Input.theta = theta;
+
+
+    FOC_Input.theta = hall_angle;
+    FOC_Input.speed_fdk = hall_speed * 2.0f * PI;
+#endif
     FOC_Input.Tpwm = PWM_TIM_PULSE_TPWM;
     FOC_Input.Udc = Vbus;
-    Voltage_DQ.Vd = 0.0f;
-    Voltage_DQ.Vq = 2.0f;
-
-//    EKF_Hz = FOC_Output.EKF[2] / (2.0f * PI);
-//    FOC_Input.Id_ref = 0.0f;
-//    FOC_Input.Tpwm = PWM_TIM_PULSE_TPWM;         //FOC
-//    FOC_Input.Udc = Vbus;
-//    FOC_Input.Rs = Rs;
-//    FOC_Input.Ls = Ls;
-//    FOC_Input.flux = flux;
-//
-//    FOC_Input.ia = Ia;
-//    FOC_Input.ib = Ib;
-//    FOC_Input.ic = Ic;
+    FOC_Input.flux = flux;
+    FOC_Input.Rs = Rs;
+    FOC_Input.Ls = Ls;
+    FOC_Input.ia = ((float) Ia) / 1000.0f;
+    FOC_Input.ib = ((float) Ib) / 1000.0f;
+    FOC_Input.ic = ((float) Ic) / 1000.0f;
     foc_algorithm_step();
 
     if (foc_state == MOTOR_RUN || foc_state == MOTOR_RUNNING) {
         __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_1, (u16) (FOC_Output.Tcmp1));
         __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_2, (u16) (FOC_Output.Tcmp2));
         __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (u16) (FOC_Output.Tcmp3));
-        //HAL_TIM_GenerateEvent(&htim8, TIM_EVENTSOURCE_COM);
-//        printf("电源电压=%fV,U相电流=%dmA,V相电流=%dmA,W相电流=%dmA\r\n",
-//               Vbus, Ia, Ib, Ic);
     } else {
         __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_1, PWM_TIM_PULSE >> 1);
         __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_2, PWM_TIM_PULSE >> 1);
         __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, PWM_TIM_PULSE >> 1);
-        //HAL_TIM_GenerateEvent(&htim8, TIM_EVENTSOURCE_COM);
     }
 
+}
+
+
+void motor_start(void) {
+    foc_algorithm_initialize();
+    Speed_Ref = 20.0F;
+    speed_close_loop_flag = 0;
+    Iq_ref = 0.0f;
+
+    hall_angle_add = 0.0005f;
+    hall_speed = 0.0f;
+    set_bldcm_enable();
 }
 /*********************************** END OF FILE *********************************************/

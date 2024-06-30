@@ -33,7 +33,7 @@ target_sources(stm32cubemx INTERFACE
     ../../Core/Src/L_identification_wrapper.c
     ../../Core/Src/R_flux_identification_wrapper.c
     ../../Core/Src/delay.c
-    ../../Core/Src/low_task.c
+    ../../Core/Src/queue.c
     ../../Core/Src/stm32_ekf_wrapper.c
     ../../Core/Src/stm32f4xx_it.c
     ../../Core/Src/stm32f4xx_hal_msp.c

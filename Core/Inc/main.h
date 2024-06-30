@@ -41,7 +41,7 @@ extern "C" {
 #include "usart.h"
 #include "gpio.h"
 #include "foc_algorithm.h"
-#include "low_task.h"
+#include "queue.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -180,7 +180,7 @@ typedef uint8_t u8;
 
 #define HALL_TIM_CLOCK (u32)84000000
 #define HALL_SAMPLE_FREQ (u32)10000
-#define PHASE_SHIFT_ANGLE (float)(0.0f/360.0f*2.0f*PI)         //偏移角度
+#define PHASE_SHIFT_ANGLE (float)(60.0f/360.0f*2.0f*PI)         //偏移角度
 #define HALL_ANGLE_FACTOR (float)((float)HALL_TIM_CLOCK/(float)HALL_SAMPLE_FREQ*PI/3.0f)
 #define HALL_SPEED_FACTOR (float)((float)HALL_TIM_CLOCK/6.0f)
 
@@ -193,10 +193,9 @@ typedef uint8_t u8;
 //#define SENSORLESS_FOC_SELECT
 
 
-#define RS_PARAMETER     0.59f            //电阻参数
-#define LS_PARAMETER     0.001f           //电感参数
-
-#define FLUX_PARAMETER   0.01150f         //磁链参数
+#define RS_PARAMETER     0.18f            //电阻参数
+#define LS_PARAMETER     0.0025f           //电感参数
+#define FLUX_PARAMETER   0.0160f         //磁链参数
 
 
 #define PWM_TIM_CLOCK       168000000

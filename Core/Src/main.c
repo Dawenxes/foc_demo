@@ -99,19 +99,8 @@ int main(void) {
     while (1) {
         /* USER CODE END WHILE */
         /* USER CODE BEGIN 3 */
-//        static int flag=0;
-//        if (HAL_GetTick() % 50 == 0 && flag == 0) {
-//            flag = 1;
-//            int32_t current_v = get_curr_val_v();
-//            int32_t current_u = get_curr_val_u();
-//            int32_t current_w = get_curr_val_w();
-//            float current_vbus = get_vbus_val();
-//            float current_temp = get_ntc_t_val();
-//            printf("电源电压=%fV, T=%f度,U相电流=%dmA,V相电流=%dmA,W相电流=%dmA\r\n",
-//                   current_vbus, current_temp, current_v, current_u, current_w);
-//        } else if (HAL_GetTick() % 50 != 0 && flag == 1) {
-//            flag = 0;
-//        }
+//        printf("电源电压=%fV,U相电流=%fA,V相电流=%fA,W相电流=%fA\r\n",
+//               FOC_Input.Udc, FOC_Input.ia, FOC_Input.ib, FOC_Input.ic);
     }
     /* USER CODE END 3 */
 }

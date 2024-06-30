@@ -33,12 +33,9 @@ typedef struct
 }bldcm_data_t;
 
 void bldcm_init(void);
-void set_bldcm_speed(uint16_t v);
-void set_bldcm_direction(motor_dir_t dir);
-motor_dir_t get_bldcm_direction(void);
+
 void set_bldcm_enable(void);
 void set_bldcm_disable(void);
-void deal_serial_data(void);
 
 #endif /* __BSP_BLDCM_CONTROL_H */
 

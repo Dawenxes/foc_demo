@@ -61,6 +61,9 @@
 
 #define GET_VBUS_VAL(val)               (((float)val - 1.24f) * 37.0f )      // 获取电压值（测量电压是电源电压的1/37）
 
+extern enum FOC_STATE {
+    MOTOR_STOP, MOTOR_GET_OFFSET, MOTOR_RUN,MOTOR_RUNNING
+};
 extern DMA_HandleTypeDef DMA_Init_Handle;
 extern ADC_HandleTypeDef adc3;
 extern float theta;
@@ -68,6 +71,7 @@ extern float angle;
 extern float Iq_ref;
 extern float EKF_Hz;
 extern uint8_t speed_close_loop_flag;
+extern enum FOC_STATE foc_state;
 
 int32_t get_curr_val_v(void);//获取V相的电流值
 int32_t get_curr_val_u(void);//获取U相的电流值
@@ -78,6 +82,5 @@ float get_ntc_r_val(void);	//获取温度传感器端的电阻值
 float get_ntc_t_val(void);	//获取温度传感器的温度
 float get_vbus_val(void);		//获取电源电压值
 void motor_run(void);
-
-
+void motor_start(void);
 #endif /* __BSP_ADC_H */

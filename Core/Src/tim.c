@@ -65,7 +65,7 @@ void MX_TIM5_Init(void) {
     slaveConfig.TriggerPolarity= TIM_TRIGGERPOLARITY_BOTHEDGE;
     HAL_TIM_SlaveConfigSynchro(&htim5, &slaveConfig);
     //__HAL_TIM_ENABLE_IT(&htim5, TIM_IT_UPDATE);
-    HAL_TIM_IC_Start_IT(&htim5, TIM_CHANNEL_1);
+
     /* USER CODE END TIM5_Init 2 */
 
 }
@@ -283,8 +283,8 @@ void set_pwm_pulse(uint16_t pulse) {
 }
 
 void hall_enable(void) {
-
-
+    __HAL_TIM_SetCounter(&htim5,0);
+    HAL_TIM_IC_Start_IT(&htim5, TIM_CHANNEL_1);
 }
 
 void hall_disable(void) {
@@ -300,9 +300,7 @@ float hall_speed;
 int update = 0;
 
 void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim) {
-    float temp;
-    uint32_t tempint = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1);
-    temp = (float) (tempint);
+    float temp = (float) HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1);
     hall_angle_add = (float) HALL_ANGLE_FACTOR / (float) (temp);
     hall_speed = (float) HALL_SPEED_FACTOR / (float) (temp);
     hall_read_temp = HAL_GPIO_ReadPin(HALL_INPUTU_GPIO_Port, HALL_INPUTU_Pin);
@@ -327,32 +325,11 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim) {
     } else if (hall_angle > (2.0f * PI)) {
         hall_angle -= 2.0f * PI;
     }
-#if 0
-    uint8_t step = 0;
-    step = get_hall_state();
-
-    OUTPUT_PWM(step);
-    update = 0;
-#endif
 }
 
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 
-//    if (update++ > 4) {
-//        printf("堵转超时\r\n");
-//        update = 0;
-//
-//        hall_disable();
-//        stop_pwm_output();
-//    } else if (update > 2 && update < 4) {
-//        uint8_t step = 0;
-//        step = get_hall_state();
-//        step++;
-//        if (step == 7) {
-//            step = 1;
-//        }
-//        OUTPUT_PWM(step);
-//    }
+
 }
 /* USER CODE END 1 */
