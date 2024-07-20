@@ -367,14 +367,4 @@ void ADC_DMA_IRQ_Handler(void) {
 void ADC_VBUS_IRQHandler(void) {
     HAL_ADC_IRQHandler(&adc3);
 }
-
-void SysTick_Handler(void) {
-    /* USER CODE BEGIN SysTick_IRQn 0 */
-
-    /* USER CODE END SysTick_IRQn 0 */
-    HAL_IncTick();
-    /* USER CODE BEGIN SysTick_IRQn 1 */
-    Speed_Pid_Calc(Speed_Ref, Speed_Fdk, &Speed_Pid_Out, &Speed_Pid);
-    /* USER CODE END SysTick_IRQn 1 */
-}
 /* USER CODE END 1 */
