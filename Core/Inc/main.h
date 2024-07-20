@@ -59,6 +59,8 @@ extern "C" {
 
 /* USER CODE END EM */
 
+void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
+
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
 
@@ -67,46 +69,32 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define LED2_Pin GPIO_PIN_2
-#define LED2_GPIO_Port GPIOE
-#define KEY3_Pin GPIO_PIN_13
-#define KEY3_GPIO_Port GPIOC
-#define KEY1_Pin GPIO_PIN_0
-#define KEY1_GPIO_Port GPIOA
-#define HALL_INPUTU_Pin GPIO_PIN_10
-#define HALL_INPUTU_GPIO_Port GPIOH
-#define HALL_INPUTV_Pin GPIO_PIN_11
-#define HALL_INPUTV_GPIO_Port GPIOH
-#define HALL_INPUTW_Pin GPIO_PIN_12
-#define HALL_INPUTW_GPIO_Port GPIOH
-#define KEY2_Pin GPIO_PIN_2
-#define KEY2_GPIO_Port GPIOG
-#define KEY4_Pin GPIO_PIN_3
-#define KEY4_GPIO_Port GPIOG
-#define KEY5_Pin GPIO_PIN_4
-#define KEY5_GPIO_Port GPIOG
-#define MOTOR_OCNPWM1_Pin GPIO_PIN_13
-#define MOTOR_OCNPWM1_GPIO_Port GPIOH
-#define MOTOR_OCNPWM2_Pin GPIO_PIN_14
-#define MOTOR_OCNPWM2_GPIO_Port GPIOH
-#define MOTOR_OCNPWM3_Pin GPIO_PIN_15
-#define MOTOR_OCNPWM3_GPIO_Port GPIOH
-#define LED0_Pin GPIO_PIN_15
-#define LED0_GPIO_Port GPIOA
-#define LED3_Pin GPIO_PIN_15
-#define LED3_GPIO_Port GPIOG
-#define DEBUG_USART_TX_Pin GPIO_PIN_6
-#define DEBUG_USART_TX_GPIO_Port GPIOB
-#define DEBUG_USART_RX_Pin GPIO_PIN_7
-#define DEBUG_USART_RX_GPIO_Port GPIOB
-#define LED1_Pin GPIO_PIN_8
-#define LED1_GPIO_Port GPIOB
-#define MOTOR_OCPWM1_Pin GPIO_PIN_5
-#define MOTOR_OCPWM1_GPIO_Port GPIOI
-#define MOTOR_OCPWM2_Pin GPIO_PIN_6
-#define MOTOR_OCPWM2_GPIO_Port GPIOI
-#define MOTOR_OCPWM3_Pin GPIO_PIN_7
-#define MOTOR_OCPWM3_GPIO_Port GPIOI
+#define HALL1_C_Pin GPIO_PIN_15
+#define HALL1_C_GPIO_Port GPIOC
+#define HALL1_C_EXTI_IRQn EXTI15_10_IRQn
+#define ENCODE_A_Pin GPIO_PIN_2
+#define ENCODE_A_GPIO_Port GPIOB
+#define ENCODE_A_EXTI_IRQn EXTI2_IRQn
+#define HALL0_C_Pin GPIO_PIN_9
+#define HALL0_C_GPIO_Port GPIOC
+#define HALL0_C_EXTI_IRQn EXTI9_5_IRQn
+#define RUN_LED_Pin GPIO_PIN_2
+#define RUN_LED_GPIO_Port GPIOD
+#define ENCODE_B_Pin GPIO_PIN_3
+#define ENCODE_B_GPIO_Port GPIOB
+#define ENCODE_B_EXTI_IRQn EXTI3_IRQn
+#define HALL0_A_Pin GPIO_PIN_4
+#define HALL0_A_GPIO_Port GPIOB
+#define HALL0_A_EXTI_IRQn EXTI4_IRQn
+#define HALL0_B_Pin GPIO_PIN_5
+#define HALL0_B_GPIO_Port GPIOB
+#define HALL0_B_EXTI_IRQn EXTI9_5_IRQn
+#define HALL1_A_Pin GPIO_PIN_6
+#define HALL1_A_GPIO_Port GPIOB
+#define HALL1_A_EXTI_IRQn EXTI9_5_IRQn
+#define HALL1_B_Pin GPIO_PIN_7
+#define HALL1_B_GPIO_Port GPIOB
+#define HALL1_B_EXTI_IRQn EXTI9_5_IRQn
 
 /* USER CODE BEGIN Private defines */
 #define LED_ON  GPIO_PIN_RESET
@@ -180,22 +168,22 @@ typedef uint8_t u8;
 
 #define HALL_TIM_CLOCK (u32)84000000
 #define HALL_SAMPLE_FREQ (u32)10000
-#define PHASE_SHIFT_ANGLE (float)(60.0f/360.0f*2.0f*PI)         //Æ«ÒÆ½Ç¶È
+#define PHASE_SHIFT_ANGLE (float)(60.0f/360.0f*2.0f*PI)         //Æ«ï¿½Æ½Ç¶ï¿½
 #define HALL_ANGLE_FACTOR (float)((float)HALL_TIM_CLOCK/(float)HALL_SAMPLE_FREQ*PI/3.0f)
 #define HALL_SPEED_FACTOR (float)((float)HALL_TIM_CLOCK/6.0f)
 
 #define FOC_PERIOD          0.0001F
 #define MOTOR_STARTUP_CURRENT   1.0f
-#define SPEED_LOOP_CLOSE_RAD_S  50.0f  // ±Õ»·ËÙ¶È¿ØÖÆËÙ¶ÈÖµ rad/s
+#define SPEED_LOOP_CLOSE_RAD_S  50.0f  // ï¿½Õ»ï¿½ï¿½Ù¶È¿ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½Öµ rad/s
 
 
 #define HALL_FOC_SELECT
 //#define SENSORLESS_FOC_SELECT
 
 
-#define RS_PARAMETER     0.18f            //µç×è²ÎÊý
-#define LS_PARAMETER     0.0025f           //µç¸Ð²ÎÊý
-#define FLUX_PARAMETER   0.0160f         //´ÅÁ´²ÎÊý
+#define RS_PARAMETER     0.18f            //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+#define LS_PARAMETER     0.0025f           //ï¿½ï¿½Ð²ï¿½ï¿½ï¿½
+#define FLUX_PARAMETER   0.0160f         //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
 
 #define PWM_TIM_CLOCK       168000000
@@ -213,9 +201,9 @@ typedef uint8_t u8;
 #define KEY3_INT_IRQn                   EXTI15_10_IRQn
 #define KEY3_INT_IRQHandler             EXTI15_10_IRQHandler
 
-#define KEY1 HAL_GPIO_ReadPin(KEY1_GPIO_Port, KEY1_Pin) /* ¶ÁÈ¡ KEY0 Òý½Å */
-#define KEY2 HAL_GPIO_ReadPin(KEY2_GPIO_Port, KEY2_Pin) /* ¶ÁÈ¡ KEY1 Òý½Å */
-#define KEY3 HAL_GPIO_ReadPin(KEY3_GPIO_Port, KEY3_Pin) /* ¶ÁÈ¡ WKUP Òý½Å */
+#define KEY1 HAL_GPIO_ReadPin(KEY1_GPIO_Port, KEY1_Pin) /* ï¿½ï¿½È¡ KEY0 ï¿½ï¿½ï¿½ï¿½ */
+#define KEY2 HAL_GPIO_ReadPin(KEY2_GPIO_Port, KEY2_Pin) /* ï¿½ï¿½È¡ KEY1 ï¿½ï¿½ï¿½ï¿½ */
+#define KEY3 HAL_GPIO_ReadPin(KEY3_GPIO_Port, KEY3_Pin) /* ï¿½ï¿½È¡ WKUP ï¿½ï¿½ï¿½ï¿½ */
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
