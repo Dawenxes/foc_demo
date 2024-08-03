@@ -59,6 +59,8 @@ extern "C" {
 
 /* USER CODE END EM */
 
+void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
+
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
 
@@ -67,46 +69,32 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define LED2_Pin GPIO_PIN_2
-#define LED2_GPIO_Port GPIOE
-#define KEY3_Pin GPIO_PIN_13
-#define KEY3_GPIO_Port GPIOC
-#define KEY1_Pin GPIO_PIN_0
-#define KEY1_GPIO_Port GPIOA
-#define HALL_INPUTU_Pin GPIO_PIN_10
-#define HALL_INPUTU_GPIO_Port GPIOH
-#define HALL_INPUTV_Pin GPIO_PIN_11
-#define HALL_INPUTV_GPIO_Port GPIOH
-#define HALL_INPUTW_Pin GPIO_PIN_12
-#define HALL_INPUTW_GPIO_Port GPIOH
-#define KEY2_Pin GPIO_PIN_2
-#define KEY2_GPIO_Port GPIOG
-#define KEY4_Pin GPIO_PIN_3
-#define KEY4_GPIO_Port GPIOG
-#define KEY5_Pin GPIO_PIN_4
-#define KEY5_GPIO_Port GPIOG
-#define MOTOR_OCNPWM1_Pin GPIO_PIN_13
-#define MOTOR_OCNPWM1_GPIO_Port GPIOH
-#define MOTOR_OCNPWM2_Pin GPIO_PIN_14
-#define MOTOR_OCNPWM2_GPIO_Port GPIOH
-#define MOTOR_OCNPWM3_Pin GPIO_PIN_15
-#define MOTOR_OCNPWM3_GPIO_Port GPIOH
-#define LED0_Pin GPIO_PIN_15
-#define LED0_GPIO_Port GPIOA
-#define LED3_Pin GPIO_PIN_15
-#define LED3_GPIO_Port GPIOG
-#define DEBUG_USART_TX_Pin GPIO_PIN_6
-#define DEBUG_USART_TX_GPIO_Port GPIOB
-#define DEBUG_USART_RX_Pin GPIO_PIN_7
-#define DEBUG_USART_RX_GPIO_Port GPIOB
-#define LED1_Pin GPIO_PIN_8
-#define LED1_GPIO_Port GPIOB
-#define MOTOR_OCPWM1_Pin GPIO_PIN_5
-#define MOTOR_OCPWM1_GPIO_Port GPIOI
-#define MOTOR_OCPWM2_Pin GPIO_PIN_6
-#define MOTOR_OCPWM2_GPIO_Port GPIOI
-#define MOTOR_OCPWM3_Pin GPIO_PIN_7
-#define MOTOR_OCPWM3_GPIO_Port GPIOI
+#define HALL1_C_Pin GPIO_PIN_15
+#define HALL1_C_GPIO_Port GPIOC
+#define HALL1_C_EXTI_IRQn EXTI15_10_IRQn
+#define ENCODE_A_Pin GPIO_PIN_2
+#define ENCODE_A_GPIO_Port GPIOB
+#define ENCODE_A_EXTI_IRQn EXTI2_IRQn
+#define HALL0_C_Pin GPIO_PIN_9
+#define HALL0_C_GPIO_Port GPIOC
+#define HALL0_C_EXTI_IRQn EXTI9_5_IRQn
+#define RUN_LED_Pin GPIO_PIN_2
+#define RUN_LED_GPIO_Port GPIOD
+#define ENCODE_B_Pin GPIO_PIN_3
+#define ENCODE_B_GPIO_Port GPIOB
+#define ENCODE_B_EXTI_IRQn EXTI3_IRQn
+#define HALL0_A_Pin GPIO_PIN_4
+#define HALL0_A_GPIO_Port GPIOB
+#define HALL0_A_EXTI_IRQn EXTI4_IRQn
+#define HALL0_B_Pin GPIO_PIN_5
+#define HALL0_B_GPIO_Port GPIOB
+#define HALL0_B_EXTI_IRQn EXTI9_5_IRQn
+#define HALL1_A_Pin GPIO_PIN_6
+#define HALL1_A_GPIO_Port GPIOB
+#define HALL1_A_EXTI_IRQn EXTI9_5_IRQn
+#define HALL1_B_Pin GPIO_PIN_7
+#define HALL1_B_GPIO_Port GPIOB
+#define HALL1_B_EXTI_IRQn EXTI9_5_IRQn
 
 /* USER CODE BEGIN Private defines */
 #define LED_ON  GPIO_PIN_RESET

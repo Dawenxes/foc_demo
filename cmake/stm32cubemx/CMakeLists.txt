@@ -8,7 +8,7 @@ enable_language(C ASM)
 
 target_compile_definitions(stm32cubemx INTERFACE 
 	USE_HAL_DRIVER 
-	STM32F407xx
+	STM32F405xx
     $<$<CONFIG:Debug>:DEBUG>
 )
 
@@ -23,20 +23,21 @@ target_include_directories(stm32cubemx INTERFACE
 
 target_sources(stm32cubemx INTERFACE
     ../../Core/Src/main.c
-    ../../Core/Src/gpio.c
-    ../../Core/Src/tim.c
-    ../../Core/Src/usart.c
-    ../../Core/Src/bsp_adc.c
-    ../../Core/Src/foc_algorithm.c
-    ../../Core/Src/speed_pid.c
-    ../../Core/Src/bsp_bldcm_control.c
-    ../../Core/Src/L_identification_wrapper.c
-    ../../Core/Src/R_flux_identification_wrapper.c
-    ../../Core/Src/delay.c
-    ../../Core/Src/queue.c
-    ../../Core/Src/stm32_ekf_wrapper.c
     ../../Core/Src/stm32f4xx_it.c
     ../../Core/Src/stm32f4xx_hal_msp.c
+	../../Core/Src/adc.cpp
+	../../Core/Src/control.cpp
+	../../Core/Src/platform.cpp
+	../../Core/Src/uart.cpp
+	../../Core/Src/motor.cpp
+	../../Core/Src/sensorbase.cpp
+	../../Core/Src/sincos.c
+	../../Core/Src/smosensor.cpp
+
+
+    ../../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_adc.c
+    ../../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_adc_ex.c
+    ../../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_ll_adc.c
     ../../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rcc.c
     ../../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rcc_ex.c
     ../../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_flash.c
@@ -53,12 +54,10 @@ target_sources(stm32cubemx INTERFACE
     ../../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim.c
     ../../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim_ex.c
     ../../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_uart.c
-    ../../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_adc.c
-    ../../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_adc_ex.c
     ../../Core/Src/system_stm32f4xx.c
     ../../Core/Src/sysmem.c
     ../../Core/Src/syscalls.c
-    ../../startup_stm32f407xx.s
+    ../../startup_stm32f405xx.s
 )
 
 target_link_directories(stm32cubemx INTERFACE
